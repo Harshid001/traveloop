@@ -58,6 +58,12 @@ const getTrip = asyncHandler(async (req, res) => {
 // @access  Private
 const createTrip = asyncHandler(async (req, res) => {
   req.body.user = req.user._id;
+  if (!req.body.destination && Array.isArray(req.body.destinations) && req.body.destinations.length) {
+    req.body.destination = req.body.destinations.join(', ');
+  }
+  if (!req.body.title && req.body.name) {
+    req.body.title = req.body.name;
+  }
 
   const trip = await Trip.create(req.body);
 

@@ -1,114 +1,78 @@
-# Traveloop ✈️🌍
+# Traveloop
 
-Traveloop is a comprehensive, full-stack travel planning application designed to help users organize trips, manage itineraries, track budgets, prepare packing lists, log travel memories in a journal, and discover new destinations. It also features an integrated AI-powered travel assistant to give personalized recommendations and tips.
+Traveloop is a full-stack travel planning platform with a responsive React website, Expo mobile app, and Express/MongoDB API. It supports onboarding, authentication, destination discovery, trip creation, itineraries, budgets, packing, journals, saved items, notifications, global search, and a travel assistant.
 
----
+## Structure
 
-## 🛠️ Tech Stack
+- `FRONTEND/` - React, Vite, React Router, Tailwind CSS, Framer Motion, Lucide, React Leaflet.
+- `MOBILE/` - React Native, Expo, NativeWind, React Navigation, secure token storage abstraction.
+- `BACKEND/` - Node.js, Express, MongoDB, Mongoose, JWT auth, REST APIs, chatbot endpoint.
 
-**Frontend:**
-- **Framework:** React + Vite
-- **Styling:** Tailwind CSS + Framer Motion (for dynamic, modern UI animations)
-- **Routing:** React Router
+## Setup
 
-**Backend:**
-- **Framework:** Node.js + Express.js
-- **Database:** MongoDB + Mongoose
-- **Authentication:** JWT (JSON Web Tokens) + bcryptjs
-- **AI Integration:** Google Gemini API (`@google/genai`)
-- **Security:** Helmet, Express Rate Limit, CORS
+1. Backend
 
----
+```bash
+cd BACKEND
+npm install
+copy .env.example .env
+npm run dev
+```
 
-## 📂 Project Structure
+2. Website
 
-The repository is organized into two main workspaces:
+```bash
+cd FRONTEND
+npm install
+copy .env.example .env
+npm run dev
+```
 
-- `FRONTEND/`: The React application (UI/UX, pages, components, and frontend logic).
-- `BACKEND/`: The Node.js server (RESTful APIs, database models, AI chatbot logic, and authentication).
+3. Mobile
 
----
+```bash
+cd MOBILE
+npm install
+copy .env.example .env
+npm start
+```
 
-## 🚀 Getting Started
+Use `npm.cmd` instead of `npm` on Windows PowerShell if script execution policy blocks `npm.ps1`.
 
-To run Traveloop locally, you will need to start both the backend server and the frontend application.
+## API Coverage
 
-### 1. Backend Setup
+Implemented or prepared routes include:
 
-1. Open a terminal and navigate to the `BACKEND` directory:
-   ```bash
-   cd BACKEND
-   ```
-2. Install the backend dependencies:
-   ```bash
-   npm install
-   ```
-3. Environment Configuration:
-   Create a `.env` file in the `BACKEND` directory (you can copy `.env.example`) and add the following keys:
-   ```env
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/traveloop
-   JWT_SECRET=your_jwt_secret_here
-   JWT_EXPIRES_IN=7d
-   CLIENT_URL=http://localhost:5173
-   GEMINI_API_KEY=your_gemini_api_key_here
-   AI_PROVIDER=gemini
-   ```
-   *(Note: Ensure you have MongoDB installed locally and running, or use a MongoDB Atlas connection string).*
-4. Start the backend development server:
-   ```bash
-   npm run dev
-   ```
-   *The backend will run on `http://localhost:5000`.*
+- Auth: `POST /api/auth/register`, `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `POST /api/auth/verify-email`, `POST /api/auth/google`
+- User: `GET /api/users/me`, `PUT /api/users/me`
+- Destinations: `GET /api/destinations`, `GET /api/destinations/:id`
+- Trips: `POST /api/trips`, `GET /api/trips`, `GET /api/trips/:id`, `PUT /api/trips/:id`, `DELETE /api/trips/:id`
+- Itineraries: `GET /api/itineraries/:tripId`, `POST /api/itineraries/:tripId`, `PUT /api/itineraries/:id`
+- Budgets: `GET /api/budgets/:tripId`, `POST /api/budgets/:tripId`, `PUT /api/budgets/:id`
+- Packing: `GET /api/packing/:tripId`, `POST /api/packing/:tripId`, `PUT /api/packing/:itemId`, `DELETE /api/packing/:itemId`
+- Journal: `GET /api/journal`, `POST /api/journal`, `PUT /api/journal/:id`, `DELETE /api/journal/:id`
+- Saved: `GET /api/saved`, `POST /api/saved`, `DELETE /api/saved/:id`
+- Notifications: `GET /api/notifications`, `PATCH /api/notifications/:id/read`, `DELETE /api/notifications/clear`
+- Search: `GET /api/search?q=...`
+- Chatbot: `POST /api/chatbot/message`
 
----
+## Testing Checklist
 
-### 2. Frontend Setup
+- Website: run `npm run build` in `FRONTEND`.
+- Backend: run `node -e "require('./src/app'); console.log('app ok')"` in `BACKEND`.
+- Mobile: run `npx expo-doctor` in `MOBILE`.
+- Auth: sign up, complete profile, logout, login, try forgot/reset/verify placeholders.
+- Dashboard: verify protected redirect, quick actions, search, notifications, and chatbot.
+- Explore: test search, filters, sort, save, detail page, share, and add-to-trip.
+- Trip flow: create trip, save draft, reorder/select destinations, activity picks, and validation.
+- Itinerary: add/edit days, preview, print/share placeholders.
+- Budget: change currency, add/delete expense, confirm progress and over-budget warning.
+- Packing: add/delete/toggle items across default categories.
+- Journal: add/edit/delete notes and confirm autosave-style draft behavior.
+- Mobile: walk through splash, auth, tabs, create trip, itinerary, budget, packing, journal, saved, notifications, profile, and chatbot screens.
 
-1. Open a **new** terminal window and navigate to the `FRONTEND` directory:
-   ```bash
-   cd FRONTEND
-   ```
-2. Install the frontend dependencies (if you haven't already):
-   ```bash
-   npm install
-   ```
-3. Environment Configuration:
-   Create a `.env` file in the root of the `FRONTEND` folder with the following variables so it can talk to the backend:
-   ```env
-   VITE_API_URL=http://localhost:5000/api
-   VITE_CHATBOT_API_URL=http://localhost:5000/api/chatbot/message
-   ```
-4. Start the frontend development server:
-   ```bash
-   npm run dev
-   ```
-   *The frontend will run on `http://localhost:5173`. Open this URL in your browser to view the app.*
+## Notes
 
----
-
-## 🌟 Key Features
-
-*   **User Authentication**: Secure signup and login functionality with JWT. Protected routes ensure that user data remains private.
-*   **Trip Dashboard**: An overview of upcoming trips, recent activities, and high-level budget summaries.
-*   **Itinerary Builder**: Plan trips day-by-day. Add, edit, or remove specific activities with time and location details.
-*   **Budget Tracker**: Set trip budgets and log individual expenses to easily monitor your spending.
-*   **Packing Lists**: Dynamically check off items you need to pack for specific trips, categorized for convenience.
-*   **Travel Journal**: Write down memories, attach mood indicators, and log locations for your trips.
-*   **Saved Places**: Save and rate locations or hotels you wish to visit in the future.
-*   **AI Travel Assistant Chatbot**: Ask the AI for destination recommendations, packing advice, or budget tips!
-
----
-
-## 🛡️ Security
-
-The backend is built with production-grade security practices:
-- Passwords are securely hashed using `bcryptjs` before being stored in the database.
-- All protected endpoints require a valid Bearer Token (JWT).
-- The application uses `helmet` to set secure HTTP headers.
-- `express-rate-limit` prevents brute-force attacks by limiting repeated requests.
-- Input data is sanitized and validated using `express-validator`.
-
-## 🧑‍💻 Contributing
-
-When contributing to this project, please ensure you check the respective `package.json` for available scripts and stick to the established directory structure. Make sure you test both the UI responsiveness (Tailwind) and the API functionality (Postman/Insomnia) before merging changes.
+- Mock fallbacks remain in place so Traveloop is usable when MongoDB or the AI provider is unavailable.
+- The mobile biometric flow is intentionally a placeholder behind a token storage abstraction. Add `expo-local-authentication` when enabling the biometric gate.
+- Chatbot responses support `reply`, `cards`, `links`, and `suggestions` from `/api/chatbot/message`.

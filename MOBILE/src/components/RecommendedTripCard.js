@@ -39,7 +39,7 @@ export default function RecommendedTripCard({ trip, onPress }) {
               style={{
                 fontSize: 18,
                 fontWeight: Platform.OS === 'ios' ? '800' : 'bold',
-                letterSpacing: -0.2,
+                letterSpacing: 0,
               }}
             >
               {title}

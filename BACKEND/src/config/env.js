@@ -10,6 +10,14 @@ const env = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   AI_PROVIDER: process.env.AI_PROVIDER || 'gemini',
+
+  // Third-party API keys
+  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY || '',
+  AMADEUS_CLIENT_ID: process.env.AMADEUS_CLIENT_ID || '',
+  AMADEUS_CLIENT_SECRET: process.env.AMADEUS_CLIENT_SECRET || '',
+  TRIPADVISOR_API_KEY: process.env.TRIPADVISOR_API_KEY || '',
+  UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY || '',
+  OPENWEATHER_API_KEY: process.env.OPENWEATHER_API_KEY || '',
 };
 
 module.exports = env;

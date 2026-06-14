@@ -30,6 +30,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    firstName: {
+      type: String,
+      default: '',
+    },
+    lastName: {
+      type: String,
+      default: '',
+    },
     location: {
       type: String,
       default: '',
@@ -50,6 +58,56 @@ const userSchema = new mongoose.Schema(
     interests: {
       type: [String],
       default: [],
+    },
+    preferences: {
+      type: [String],
+      default: [],
+    },
+    preferredCurrency: {
+      type: String,
+      enum: ['INR', 'USD', ''],
+      default: 'INR',
+    },
+    currency: {
+      type: String,
+      enum: ['INR', 'USD', ''],
+      default: 'INR',
+    },
+    preferredLanguage: {
+      type: String,
+      default: 'English',
+    },
+    language: {
+      type: String,
+      default: 'English',
+    },
+    savedTravelersCount: {
+      type: Number,
+      default: 1,
+    },
+    travelers: {
+      type: Number,
+      default: 1,
+    },
+    profileComplete: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationCode: {
+      type: String,
+      select: false,
+    },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      select: false,
     },
   },
   {

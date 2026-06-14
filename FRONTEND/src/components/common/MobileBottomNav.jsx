@@ -13,7 +13,7 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Primary mobile navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white/95 px-2 pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl safe-bottom md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-100 bg-white/95 px-2 pt-2 shadow-[0_-4px_20px_rgba(15,23,42,0.06)] backdrop-blur-xl safe-bottom md:hidden"
     >
       <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
         {items.map(({ label, to, icon: Icon }) => (
@@ -22,8 +22,10 @@ export default function MobileBottomNav() {
             to={to}
             aria-label={label}
             className={({ isActive }) =>
-              `tap-target flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-semibold transition-colors ${
-                isActive ? 'bg-primary/10 text-primary' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+              `tap-target flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-semibold transition-all duration-200 ${
+                isActive
+                  ? 'bg-primary/8 text-primary'
+                  : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
               }`
             }
           >

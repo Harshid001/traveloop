@@ -18,6 +18,7 @@ const addPackingItem = asyncHandler(async (req, res) => {
   const item = await PackingItem.create({
     user: req.user._id,
     trip: req.params.tripId,
+    name: req.body.name || req.body.text,
     ...req.body
   });
 
@@ -30,7 +31,7 @@ const addPackingItem = asyncHandler(async (req, res) => {
 const updatePackingItem = asyncHandler(async (req, res) => {
   const item = await PackingItem.findOneAndUpdate(
     { _id: req.params.itemId, user: req.user._id },
-    req.body,
+    { ...req.body, name: req.body.name || req.body.text },
     { new: true, runValidators: true }
   );
 

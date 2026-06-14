@@ -1,6 +1,45 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { getChatbotResponse } = require('../services/chatbotService');
 const ChatMessage = require('../models/ChatMessage');
+const destinations = require('../data/destinations');
+
+function buildAssistantExtras(message) {
+  const text = message.toLowerCase();
+  const matchingDestinations = destinations
+    .filter((item) =>
+      text.includes(item.name.toLowerCase()) ||
+      item.activities.some((activity) => text.includes(String(activity).toLowerCase().split(' ')[0])) ||
+      text.includes(item.category.toLowerCase()),
+    )
+    .slice(0, 3);
+
+  const cards = (matchingDestinations.length ? matchingDestinations : destinations.slice(0, 3)).map((item) => ({
+    title: item.name,
+    subtitle: `${item.country} • ${item.rating} rating • $${item.budgetEstimate}`,
+    image: item.image,
+    href: `/destinations/${item.id}`,
+    tags: [item.category, item.bestTimeToVisit],
+  }));
+
+  const links = [
+    { label: 'Explore destinations', href: '/explore' },
+    { label: 'Create itinerary', href: '/itinerary-builder' },
+    { label: 'Open budget planner', href: '/budget' },
+  ];
+
+  const suggestions = [
+    'Plan 3-day itinerary',
+    'Budget travel ideas',
+    'Create packing checklist',
+    'Best places near me',
+    'Suggest a trip',
+  ];
+
+  if (text.includes('packing')) suggestions.unshift('What should I pack?');
+  if (text.includes('budget')) suggestions.unshift('Estimate my daily budget');
+
+  return { cards, links, suggestions: [...new Set(suggestions)].slice(0, 6) };
+}
 
 // @desc    Process chatbot message
 // @route   POST /api/chatbot/message
@@ -21,13 +60,12 @@ const processMessage = asyncHandler(async (req, res) => {
   // Format expected by frontend:
   // { reply: "...", suggestions: [], meta: {} }
   
+  const extras = buildAssistantExtras(message);
   const responsePayload = {
     reply,
-    suggestions: [
-      "Suggest a 3-day itinerary for Paris",
-      "How can I save money on flights?",
-      "What should I pack for a beach vacation?"
-    ],
+    cards: extras.cards,
+    links: extras.links,
+    suggestions: extras.suggestions,
     meta: {
       timestamp: new Date()
     }

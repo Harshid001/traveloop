@@ -26,7 +26,7 @@ export default function StatsSection({ data = STATS }) {
             style={{
               fontSize: 22,
               fontWeight: Platform.OS === 'ios' ? '900' : 'bold',
-              letterSpacing: -0.3,
+              letterSpacing: 0,
             }}
           >
             {item.value}

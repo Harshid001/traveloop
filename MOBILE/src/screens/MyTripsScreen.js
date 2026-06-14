@@ -1,136 +1,96 @@
-import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
-import EmptyState from '../components/EmptyState';
-import Header from '../components/Header';
-import { destinations, myTrips } from '../constants/data';
-import { tripsApi } from '../services/api';
+import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MapPin, CalendarDays, ChevronRight } from 'lucide-react-native';
 
-const tabs = [
-  { id: 'all', label: 'All' },
-  { id: 'active', label: 'Active' },
-  { id: 'upcoming', label: 'Upcoming' },
-  { id: 'completed', label: 'Done' },
+const TRIPS = [
+  {
+    id: '1',
+    status: 'upcoming',
+    title: 'Summer in Santorini',
+    date: 'Aug 12 - Aug 18, 2026',
+    image: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e',
+    countdown: '74 Days'
+  },
+  {
+    id: '2',
+    status: 'completed',
+    title: 'Kyoto Cultural Tour',
+    date: 'Apr 5 - Apr 12, 2025',
+    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e',
+    countdown: null
+  }
 ];
 
-const normalizeTrip = (trip) => ({
-  id: String(trip._id || trip.id),
-  title: trip.title,
-  status: trip.status === 'ongoing' ? 'active' : trip.status || 'upcoming',
-  startDate: trip.startDate ? new Date(trip.startDate).toDateString() : 'Flexible',
-  endDate: trip.endDate ? new Date(trip.endDate).toDateString() : '',
-  destinations: Array.isArray(trip.destinations) ? trip.destinations : [trip.destination].filter(Boolean),
-  totalBudget: trip.budget ? `INR ${trip.budget}` : 'Custom budget',
-  image: trip.coverImage || destinations[0].image,
-  activities: trip.tags?.length || 4,
-});
-
 export default function MyTripsScreen({ navigation }) {
-  const [activeTab, setActiveTab] = useState('all');
-  const [items, setItems] = useState(myTrips);
-  const [notice, setNotice] = useState('');
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadTrips = async () => {
-      try {
-        const response = await tripsApi.getTrips();
-        const list = Array.isArray(response) ? response : response?.data || [];
-        if (isMounted && list.length) {
-          setItems(list.map(normalizeTrip));
-        }
-      } catch (err) {
-        if (isMounted) {
-          setNotice(`Demo trips shown: ${err.message}`);
-        }
-      }
-    };
-
-    loadTrips();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const visibleTrips = useMemo(() => {
-    if (activeTab === 'all') return items;
-    return items.filter((trip) => trip.status === activeTab);
-  }, [activeTab, items]);
+  const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-bg">
-      <Header title="My trips" subtitle="Track active, upcoming, and completed journeys." />
-      <View className="mb-4">
-        <FlatList
-          data={tabs}
-          horizontal
-          keyExtractor={(item) => item.id}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20 }}
-          renderItem={({ item }) => {
-            const active = item.id === activeTab;
-            return (
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => setActiveTab(item.id)}
-                className={`mr-3 rounded-full px-5 py-3 ${active ? 'bg-primary' : 'bg-white'}`}
-              >
-                <Text className={`text-sm font-extrabold ${active ? 'text-white' : 'text-dark'}`}>{item.label}</Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
+    <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
+      <View className="px-5 py-4 flex-row justify-between items-center mb-2">
+        <Text className="text-3xl font-black text-slate-900">My Trips</Text>
+        <TouchableOpacity 
+          className="bg-primary/10 px-4 py-2 rounded-full"
+          onPress={() => navigation.navigate('CreateTrip')}
+        >
+          <Text className="text-primary font-bold">+ New</Text>
+        </TouchableOpacity>
       </View>
-      {notice ? <Text className="mx-5 mb-3 text-xs font-semibold text-amber-600">{notice}</Text> : null}
-      <FlatList
-        data={visibleTrips}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={0.88}
-            onPress={() =>
-              navigation.navigate('TripDetails', {
-                trip: {
-                  id: item.id,
-                  title: item.title,
-                  location: item.destinations.join(', '),
-                  image: item.image,
-                  duration: `${item.startDate} - ${item.endDate || 'Open'}`,
-                  price: item.totalBudget,
-                  rating: '4.8',
-                  description: 'A saved Traveloop itinerary with bookings, activities, and notes ready to review.',
-                  activities: item.destinations,
-                  facilities: ['Plan', 'Activities', 'Budget', 'Notes'],
-                },
-              })
-            }
-            className="mb-5 overflow-hidden rounded-3xl bg-white"
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}>
+        
+        <Text className="text-lg font-bold text-slate-900 mb-4 mt-2">Upcoming</Text>
+        
+        {TRIPS.filter(t => t.status === 'upcoming').map(trip => (
+          <TouchableOpacity 
+            key={trip.id}
+            activeOpacity={0.9}
+            className="bg-white rounded-3xl overflow-hidden mb-6 shadow-sm border border-slate-100"
+            style={{ shadowColor: '#0F172A', shadowOpacity: 0.05, shadowRadius: 10, elevation: 5 }}
+            onPress={() => navigation.navigate('TripDetails', { trip })}
           >
-            <Image source={{ uri: item.image }} className="h-44 w-full" resizeMode="cover" />
-            <View className="p-5">
-              <View className="flex-row items-center justify-between">
-                <Text className="flex-1 text-xl font-black text-dark">{item.title}</Text>
-                <Text className="rounded-full bg-teal-50 px-3 py-1 text-xs font-black uppercase text-primary">{item.status}</Text>
+            <View className="h-40 relative">
+              <Image source={{ uri: trip.image }} className="w-full h-full" resizeMode="cover" />
+              <View className="absolute inset-0 bg-black/20" />
+              <View className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full">
+                <Text className="text-primary font-bold text-xs">In {trip.countdown}</Text>
               </View>
-              <Text className="mt-2 text-sm font-semibold text-slate-500">{item.destinations.join(' -> ')}</Text>
-              <View className="mt-4 flex-row justify-between">
-                <Text className="text-sm font-bold text-slate-500">{item.startDate}</Text>
-                <Text className="text-sm font-black text-dark">{item.totalBudget}</Text>
+            </View>
+            <View className="p-5 flex-row items-center justify-between">
+              <View>
+                <Text className="text-xl font-bold text-slate-900 mb-1">{trip.title}</Text>
+                <View className="flex-row items-center">
+                  <CalendarDays size={14} color="#64748B" />
+                  <Text className="text-slate-500 text-sm ml-1.5">{trip.date}</Text>
+                </View>
+              </View>
+              <View className="w-10 h-10 rounded-full bg-slate-50 items-center justify-center">
+                <ChevronRight size={20} color="#0F9D8F" />
               </View>
             </View>
           </TouchableOpacity>
-        )}
-        ListEmptyComponent={
-          <EmptyState
-            title="No trips here"
-            message="Explore destinations and create your next Traveloop plan."
-            actionLabel="Explore trips"
-            onAction={() => navigation.navigate('Explore')}
-          />
-        }
-      />
+        ))}
+
+        <Text className="text-lg font-bold text-slate-900 mb-4 mt-4">Completed</Text>
+        
+        {TRIPS.filter(t => t.status === 'completed').map(trip => (
+          <TouchableOpacity 
+            key={trip.id}
+            activeOpacity={0.9}
+            className="bg-white rounded-3xl p-4 mb-4 flex-row items-center shadow-sm border border-slate-100"
+            onPress={() => navigation.navigate('TripDetails', { trip })}
+          >
+            <Image source={{ uri: trip.image }} className="w-20 h-20 rounded-2xl mr-4" />
+            <View className="flex-1">
+              <Text className="text-lg font-bold text-slate-900 mb-1">{trip.title}</Text>
+              <View className="flex-row items-center">
+                <CalendarDays size={12} color="#64748B" />
+                <Text className="text-slate-500 text-xs ml-1.5">{trip.date}</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+
+      </ScrollView>
     </View>
   );
 }

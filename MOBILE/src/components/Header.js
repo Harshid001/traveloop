@@ -27,7 +27,7 @@ export default function Header({ title, subtitle, onBack, rightLabel, onRightPre
               fontSize: 28,
               fontWeight: Platform.OS === 'ios' ? '800' : 'bold',
               lineHeight: 34,
-              letterSpacing: -0.5,
+              letterSpacing: 0,
             }}
           >
             {title}

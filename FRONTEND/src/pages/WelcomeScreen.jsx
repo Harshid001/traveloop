@@ -7,7 +7,7 @@ export default function WelcomeScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-800 flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-gradient-to-br from-primary to-accent flex flex-col lg:flex-row">
 
       {/* Brand Section */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
@@ -36,14 +36,14 @@ export default function WelcomeScreen() {
         className="bg-white w-full lg:w-[440px] rounded-t-[40px] lg:rounded-t-none lg:rounded-l-[48px] px-8 pt-12 pb-16 flex flex-col items-center justify-center shadow-[-8px_0_40px_rgba(0,0,0,0.1)] relative z-20"
       >
         <div className="w-16 h-1.5 bg-slate-200 rounded-full mb-8 lg:hidden"></div>
-        <h2 className="font-poppins text-2xl font-extrabold text-slate-900 mb-2 text-center tracking-tight">Get Started</h2>
-        <p className="text-slate-500 text-base mb-10 text-center font-medium">Plan smarter. Travel better.</p>
+        <h2 className="font-poppins text-2xl font-extrabold text-textDark mb-2 text-center tracking-tight">Get Started</h2>
+        <p className="text-textMuted text-base mb-10 text-center font-medium">Plan smarter. Travel better.</p>
 
         <div className="w-full max-w-[320px] space-y-4">
-          <Button variant="primary" onClick={() => navigate('/login')} className="w-full py-4.5 text-base rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+          <Button variant="primary" onClick={() => navigate('/login')} className="w-full py-4 text-base rounded-xl bg-primary hover:bg-primary-dark text-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
             LOGIN
           </Button>
-          <Button variant="secondary" onClick={() => navigate('/signup')} className="w-full py-4 text-base rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+          <Button variant="secondary" onClick={() => navigate('/signup')} className="w-full py-4 text-base rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-textDark shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
             SIGN UP
           </Button>
         </div>

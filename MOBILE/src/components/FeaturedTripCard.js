@@ -36,7 +36,7 @@ export default function FeaturedTripCard({ trip, onPress, onViewPlan }) {
               fontSize: 28,
               fontWeight: Platform.OS === 'ios' ? '900' : 'bold',
               lineHeight: 34,
-              letterSpacing: -0.3,
+              letterSpacing: 0,
             }}
           >
             {title}

@@ -9,7 +9,7 @@ export default function MoodChips({ data, onChipPress, onSeeAll }) {
           style={{
             fontSize: 20,
             fontWeight: Platform.OS === 'ios' ? '800' : 'bold',
-            letterSpacing: -0.3,
+            letterSpacing: 0,
           }}
         >
           Explore by mood

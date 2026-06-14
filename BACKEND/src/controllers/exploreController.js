@@ -1,5 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { successResponse } = require('../utils/apiResponse');
+const { filterDestinations } = require('./destinationController');
 
 // Dummy data for explore section since we might not have a full DB for this,
 // or we can query from a generic "Explore" collection.
@@ -44,22 +45,15 @@ const exploreData = [
 // @route   GET /api/explore
 // @access  Public
 const getExploreData = asyncHandler(async (req, res) => {
-  let data = [...exploreData];
-  const { search, type, budget } = req.query;
+  let data = filterDestinations({
+    search: req.query.search,
+    category: req.query.category || req.query.type,
+    budget: req.query.budget,
+    rating: req.query.rating,
+    sort: req.query.sort,
+  });
 
-  if (search) {
-    data = data.filter(item => item.name.toLowerCase().includes(search.toLowerCase()) || item.country.toLowerCase().includes(search.toLowerCase()));
-  }
-
-  if (type) {
-    data = data.filter(item => item.type.toLowerCase() === type.toLowerCase());
-  }
-
-  if (budget) {
-    if (budget === 'low') data = data.filter(item => item.estimatedBudget < 20000);
-    if (budget === 'medium') data = data.filter(item => item.estimatedBudget >= 20000 && item.estimatedBudget <= 40000);
-    if (budget === 'high') data = data.filter(item => item.estimatedBudget > 40000);
-  }
+  if (!data.length) data = exploreData;
 
   res.status(200).json({
     success: true,

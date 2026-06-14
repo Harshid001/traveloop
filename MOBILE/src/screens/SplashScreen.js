@@ -1,13 +1,35 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
+import { hydrateAuthToken } from '../services/api';
+import { getBoolean, STORAGE_KEYS } from '../services/storage';
 
 export default function SplashScreen({ navigation }) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Onboarding');
-    }, 1200);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-    return () => clearTimeout(timer);
+  useEffect(() => {
+    let mounted = true;
+    const timer = setTimeout(async () => {
+      try {
+        const [token, completed] = await Promise.all([
+          hydrateAuthToken(),
+          getBoolean(STORAGE_KEYS.onboardingComplete, false),
+        ]);
+        if (!mounted) return;
+        if (token) {
+          navigation.replace('MainTabs');
+        } else {
+          navigation.replace(completed ? 'Login' : 'Onboarding');
+        }
+      } catch (err) {
+        console.error('Splash Screen Error:', err);
+        if (mounted) setErrorMsg(err.message || 'Unknown error');
+      }
+    }, 900);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
   }, [navigation]);
 
   return (
@@ -19,6 +41,11 @@ export default function SplashScreen({ navigation }) {
       <Text className="mt-4 text-lg leading-7 text-teal-50">
         Plan smart trips, save places, and keep every journey in one calm mobile flow.
       </Text>
+      {errorMsg ? (
+        <Text className="mt-4 text-sm font-bold text-red-500 bg-white p-2 rounded">
+          Error: {errorMsg}
+        </Text>
+      ) : null}
     </View>
   );
 }

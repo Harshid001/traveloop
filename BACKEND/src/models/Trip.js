@@ -16,6 +16,18 @@ const tripSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a destination'],
     },
+    destinations: {
+      type: [String],
+      default: [],
+    },
+    selectedDestinations: {
+      type: [Object],
+      default: [],
+    },
+    selectedActivities: {
+      type: Object,
+      default: {},
+    },
     startDate: {
       type: Date,
       required: [true, 'Please add a start date'],
@@ -32,6 +44,15 @@ const tripSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    budgetRange: {
+      type: String,
+      default: '',
+    },
+    tripType: {
+      type: String,
+      enum: ['Solo', 'Couple', 'Family', 'Friends', 'Business', 'Adventure', 'Luxury', 'Budget', ''],
+      default: '',
+    },
     coverImage: {
       type: String,
       default: '',
@@ -42,7 +63,7 @@ const tripSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['planning', 'upcoming', 'ongoing', 'completed', 'cancelled'],
+      enum: ['draft', 'planning', 'upcoming', 'active', 'ongoing', 'completed', 'cancelled'],
       default: 'planning',
     },
     tags: {

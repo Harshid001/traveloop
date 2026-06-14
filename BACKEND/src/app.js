@@ -16,9 +16,20 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const packingRoutes = require('./routes/packingRoutes');
 const journalRoutes = require('./routes/journalRoutes');
 const savedRoutes = require('./routes/savedRoutes');
+const wishlistRoutes = require('./routes/wishlistRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
+const profileRoutes = require('./routes/profileRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const exploreRoutes = require('./routes/exploreRoutes');
+const destinationRoutes = require('./routes/destinationRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const searchRoutes = require('./routes/searchRoutes');
+const placesRoutes = require('./routes/placesRoutes');
+const discoverRoutes = require('./routes/discoverRoutes');
+const mapsRoutes = require('./routes/mapsRoutes');
+const imagesRoutes = require('./routes/imagesRoutes');
+const recommendationsRoutes = require('./routes/recommendationsRoutes');
 
 const app = express();
 
@@ -52,9 +63,23 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/packing', packingRoutes);
 app.use('/api/journals', journalRoutes);
 app.use('/api/saved', savedRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/explore', exploreRoutes);
+app.use('/api/destinations', destinationRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/places', placesRoutes);
+app.use('/api/discover', discoverRoutes);
+app.use('/api/maps', mapsRoutes);
+app.use('/api/images', imagesRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
+
+// Backward-compatible aliases matching the public API checklist.
+app.use('/api/journal', journalRoutes);
 
 // Error Handling Middleware
 app.use(notFound);

@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import Button from '../components/common/Button';
 
-/* Mock itinerary data */
 const itinerary = {
   name: 'European Adventure',
   totalDays: 9,
@@ -43,20 +42,15 @@ export default function ItineraryViewScreen() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] print:bg-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 print:hidden">
+    <div className="min-h-screen bg-surface-50 print:bg-white">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] print:hidden">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <button aria-label="Go back" onClick={() => navigate(-1)} className="tap-target rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors">
-              <ArrowLeft size={18} />
-            </button>
-            <h1 className="min-w-0 truncate font-poppins text-base font-bold text-gray-900 xs:text-lg">Itinerary Preview</h1>
+            <button aria-label="Go back" onClick={() => navigate(-1)} className="tap-target rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors"><ArrowLeft size={18} /></button>
+            <h1 className="min-w-0 truncate font-poppins text-base font-bold text-textDark sm:text-lg">Itinerary Preview</h1>
           </div>
           <div className="flex gap-2">
-            <button aria-label="Print itinerary" onClick={() => window.print()} className="tap-target rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
-              <Printer size={16} />
-            </button>
+            <button aria-label="Print itinerary" onClick={() => window.print()} className="tap-target rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-100 transition-colors"><Printer size={16} /></button>
             <Button variant="primary" onClick={() => navigate('/itinerary-builder')} className="px-3 py-2.5 text-xs sm:px-4">
               <PenLine size={14} /> <span className="hidden sm:inline">Edit</span>
             </Button>
@@ -69,9 +63,9 @@ export default function ItineraryViewScreen() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-primary to-primary-light rounded-3xl p-6 sm:p-8 text-white mb-8"
+          className="bg-gradient-to-br from-primary to-accent rounded-2xl p-6 sm:p-8 text-white mb-8"
         >
-          <h2 className="break-words font-poppins text-xl font-bold mb-1 xs:text-2xl sm:text-3xl">{itinerary.name}</h2>
+          <h2 className="break-words font-poppins text-xl font-bold mb-1 sm:text-2xl lg:text-3xl">{itinerary.name}</h2>
           <p className="text-white/60 text-sm mb-6">Your complete travel plan</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             <div className="bg-white/10 rounded-xl p-3 text-center">
@@ -96,15 +90,15 @@ export default function ItineraryViewScreen() {
         <div className="no-scrollbar flex snap-x items-center gap-2 mb-8 overflow-x-auto pb-2">
           {itinerary.stops.map((s, i) => (
             <div key={i} className="flex shrink-0 snap-start items-center gap-2">
-              <div className="bg-white rounded-xl border border-gray-100 px-4 py-2.5 shadow-sm">
-                <p className="text-xs font-bold text-gray-800">{s.city}</p>
-                <p className="text-[10px] text-gray-400">{s.dates}</p>
+              <div className="bg-white rounded-xl border border-slate-100 px-4 py-2.5 shadow-soft">
+                <p className="text-xs font-bold text-textDark">{s.city}</p>
+                <p className="text-[10px] text-textMuted">{s.dates}</p>
               </div>
               {i < itinerary.stops.length - 1 && (
-                <div className="flex items-center gap-1 text-gray-300">
-                  <div className="w-6 h-px bg-gray-200" />
-                  <Plane size={12} className="text-[#00B4D8]" />
-                  <div className="w-6 h-px bg-gray-200" />
+                <div className="flex items-center gap-1 text-slate-300">
+                  <div className="w-6 h-px bg-slate-200" />
+                  <Plane size={12} className="text-primary" />
+                  <div className="w-6 h-px bg-slate-200" />
                 </div>
               )}
             </div>
@@ -113,11 +107,10 @@ export default function ItineraryViewScreen() {
 
         {/* Timeline */}
         <div className="relative">
-          <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-[#00B4D8] to-[#06d6a0]" />
+          <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-success" />
 
           {itinerary.stops.map((stop, si) => (
             <div key={si} className="mb-8">
-              {/* City Header */}
               <motion.div
                 initial={{ opacity: 0, x: -16 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -128,12 +121,11 @@ export default function ItineraryViewScreen() {
                   <MapPin size={8} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="font-poppins text-lg font-bold text-gray-900">{stop.city}, {stop.country}</h3>
-                  <p className="text-xs text-gray-400 flex items-center gap-1"><Calendar size={11} /> {stop.dates}</p>
+                  <h3 className="font-poppins text-lg font-bold text-textDark">{stop.city}, {stop.country}</h3>
+                  <p className="text-xs text-textMuted flex items-center gap-1"><Calendar size={11} /> {stop.dates}</p>
                 </div>
               </motion.div>
 
-              {/* Days */}
               {stop.days.map((day, di) => (
                 <motion.div
                   key={di}
@@ -143,18 +135,18 @@ export default function ItineraryViewScreen() {
                   transition={{ delay: di * 0.05 }}
                   className="relative pl-14 mb-3"
                 >
-                  <div className="absolute left-[18px] top-4 w-2.5 h-2.5 rounded-full bg-[#e0f2fe] border-2 border-[#00B4D8]" />
-                  <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-shadow">
+                  <div className="absolute left-[18px] top-4 w-2.5 h-2.5 rounded-full bg-primary/15 border-2 border-primary" />
+                  <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-soft hover:shadow-hover transition-shadow">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#f0f9ff] flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
                         <day.icon size={14} className="text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                          <span className="text-[10px] font-bold text-primary bg-[#e0f2fe] rounded-md px-2 py-0.5">Day {day.day}</span>
-                          <h4 className="min-w-0 text-sm font-semibold text-gray-800 sm:truncate">{day.label}</h4>
+                          <span className="text-[10px] font-bold text-primary bg-primary/8 rounded-md px-2 py-0.5">Day {day.day}</span>
+                          <h4 className="min-w-0 text-sm font-semibold text-textDark sm:truncate">{day.label}</h4>
                         </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">{day.desc}</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">{day.desc}</p>
                       </div>
                     </div>
                   </div>
@@ -169,23 +161,23 @@ export default function ItineraryViewScreen() {
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm mt-4 mb-8"
+          className="bg-white rounded-2xl border border-slate-100 p-5 shadow-soft mt-4 mb-8"
         >
-          <h3 className="font-poppins text-base font-bold text-gray-900 mb-4">Budget Breakdown</h3>
+          <h3 className="font-poppins text-base font-bold text-textDark mb-4">Budget Breakdown</h3>
           <div className="space-y-3">
             {budgetSplit.map((b, i) => (
               <div key={i} className="grid grid-cols-[5rem_1fr] items-center gap-2 sm:flex sm:gap-3">
-                <span className="text-xs text-gray-500 w-20 shrink-0">{b.label}</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                <span className="text-xs text-textMuted w-20 shrink-0">{b.label}</span>
+                <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     whileInView={{ width: `${b.pct}%` }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.8, delay: i * 0.1 }}
-                    className="h-full rounded-full bg-gradient-to-r from-primary to-primary-light"
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
                   />
                 </div>
-                <span className="col-span-2 text-right text-xs font-semibold text-gray-700 sm:col-span-1 sm:w-20 sm:shrink-0">{b.amount}</span>
+                <span className="col-span-2 text-right text-xs font-semibold text-textDark sm:col-span-1 sm:w-20 sm:shrink-0">{b.amount}</span>
               </div>
             ))}
           </div>

@@ -44,35 +44,37 @@ export default function ShareModal({ open, onClose, tripTitle = 'My Trip', tripU
         <>
           {/* Backdrop */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={onClose} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]" />
+            onClick={onClose} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[100]" />
 
-          {/* Modal */}
+          {/* Modal — centered on web */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="share-modal-title"
-            className="fixed inset-x-0 bottom-0 top-auto z-[101] max-h-[calc(100dvh-1rem)] w-full overflow-y-auto rounded-t-3xl bg-white shadow-[0_-20px_60px_rgba(0,0,0,0.16)] sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-96 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
+            className="fixed z-[101] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-[0_25px_70px_rgba(0,0,0,0.15)]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <Share2 size={18} className="text-primary" />
-                <h3 id="share-modal-title" className="font-poppins text-base font-bold text-gray-900">Share Trip</h3>
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Share2 size={15} className="text-primary" />
+                </div>
+                <h3 id="share-modal-title" className="font-poppins text-base font-bold text-textDark">Share Trip</h3>
               </div>
-              <button aria-label="Close share dialog" onClick={onClose} className="tap-target rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+              <button aria-label="Close share dialog" onClick={onClose} className="tap-target rounded-full text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors">
                 <X size={16} />
               </button>
             </div>
 
             <div className="p-5 space-y-5">
               {/* Trip info */}
-              <div className="bg-[#f0f9ff] rounded-xl p-3 text-center">
-                <p className="text-xs text-gray-400 mb-0.5">Sharing</p>
-                <p className="font-poppins text-sm font-bold text-gray-800">{tripTitle}</p>
+              <div className="bg-primary/5 rounded-xl p-3.5 text-center">
+                <p className="text-[10px] text-textMuted mb-0.5 uppercase tracking-wider font-semibold">Sharing</p>
+                <p className="font-poppins text-sm font-bold text-textDark">{tripTitle}</p>
               </div>
 
               {/* Social Buttons */}
@@ -80,24 +82,24 @@ export default function ShareModal({ open, onClose, tripTitle = 'My Trip', tripU
                 {socials.map((s) => (
                   <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer"
                     aria-label={`Share on ${s.name}`}
-                    className="flex min-h-20 flex-col items-center gap-2 rounded-xl py-3 hover:bg-gray-50 transition-colors">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: s.color + '15' }}>
+                    className="flex min-h-20 flex-col items-center gap-2 rounded-xl py-3 hover:bg-slate-50 transition-all duration-200 group">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: s.color + '12' }}>
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill={s.color}>{s.icon}</svg>
                     </div>
-                    <span className="text-[10px] font-medium text-gray-500">{s.name}</span>
+                    <span className="text-[10px] font-medium text-textMuted">{s.name}</span>
                   </a>
                 ))}
               </div>
 
               {/* Copy Link */}
-              <div className="flex flex-col gap-2 xs:flex-row">
-                <div className="min-h-11 flex-1 bg-gray-50 border border-gray-100 rounded-full px-4 py-2.5 text-xs text-gray-500 truncate flex items-center gap-2">
-                  <ExternalLink size={13} className="text-gray-400 shrink-0" />
+              <div className="flex gap-2">
+                <div className="min-h-11 flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs text-textMuted truncate flex items-center gap-2">
+                  <ExternalLink size={13} className="text-slate-400 shrink-0" />
                   <span className="truncate">{shareUrl}</span>
                 </div>
                 <button onClick={copyLink}
-                  className={`min-h-11 justify-center px-5 py-2.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                    copied ? 'bg-green-500 text-white' : 'bg-primary text-white hover:bg-[#006098]'
+                  className={`min-h-11 justify-center px-5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
+                    copied ? 'bg-success text-white' : 'bg-primary text-white hover:bg-primary-dark'
                   }`}>
                   {copied ? <><Check size={13} /> Copied!</> : <><Copy size={13} /> Copy</>}
                 </button>
