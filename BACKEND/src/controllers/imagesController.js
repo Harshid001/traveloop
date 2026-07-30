@@ -15,11 +15,11 @@ const searchImages = async (req, res) => {
     }
 
     const cacheKey = `images:search:${q}:${page}:${perPage}:${orientation}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await unsplashService.searchPhotos(q, page, perPage, orientation);
-    cache.set(cacheKey, result, CACHE_TTL.IMAGES);
+    await cache.set(cacheKey, result, CACHE_TTL.IMAGES);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -43,11 +43,11 @@ const getDestinationImages = async (req, res) => {
     }
 
     const cacheKey = `images:destination:${destinationName}:${count}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await unsplashService.getDestinationImages(destinationName, count);
-    cache.set(cacheKey, result, CACHE_TTL.IMAGES);
+    await cache.set(cacheKey, result, CACHE_TTL.IMAGES);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -66,11 +66,11 @@ const getRandomImage = async (req, res) => {
     const { q, orientation } = req.query;
 
     const cacheKey = `images:random:${q}:${orientation}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await unsplashService.getRandomPhoto(q, orientation);
-    cache.set(cacheKey, result, CACHE_TTL.IMAGES);
+    await cache.set(cacheKey, result, CACHE_TTL.IMAGES);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {

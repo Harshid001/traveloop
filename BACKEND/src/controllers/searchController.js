@@ -24,7 +24,8 @@ const globalSearch = asyncHandler(async (req, res) => {
     });
   }
 
-  const regex = { $regex: text, $options: 'i' };
+  const escapedText = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = { $regex: escapedText, $options: 'i' };
   const [trips, journalNotes, savedItems] = await Promise.all([
     Trip.find({ user: req.user._id, $or: [{ title: regex }, { destination: regex }] }).limit(10),
     Journal.find({ user: req.user._id, $or: [{ title: regex }, { content: regex }, { location: regex }] }).limit(10),

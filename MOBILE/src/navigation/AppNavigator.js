@@ -45,7 +45,7 @@ import PackingScreen from '../screens/PackingScreen';
 import JournalScreen from '../screens/JournalScreen';
 import ChatbotScreen from '../screens/ChatbotScreen';
 import DestinationDetailScreen from '../screens/DestinationDetailScreen';
-// Removed NotificationsScreen from Stack entirely as per requirements.
+import NotificationsScreen from '../screens/NotificationsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -139,6 +139,7 @@ export default function AppNavigator() {
           <Stack.Screen name="Packing" component={PackingScreen} />
           <Stack.Screen name="Journal" component={JournalScreen} />
           <Stack.Screen name="Chatbot" component={ChatbotScreen} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </ErrorBoundary>

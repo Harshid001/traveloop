@@ -56,7 +56,7 @@ export default function HomeScreen({ navigation }) {
         />
         <View>
           <Text className="text-slate-500 text-sm font-medium">{greeting()}</Text>
-          <Text className="text-slate-900 text-xl font-bold">Alex ✌️</Text>
+          <Text className="text-slate-900 text-xl font-bold">Traveler ✌️</Text>
         </View>
       </View>
       <View className="flex-row items-center">

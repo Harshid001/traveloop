@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Send, User, Mail, Phone, MapPin, Lock, Calendar, Hash, Eye, EyeOff, Loader2 } from 'lucide-react';
-import Button from '../components/common/Button';
+import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 
 function SignupField({ icon: Icon, type = 'text', field, placeholder, half, value, onChange, children }) {

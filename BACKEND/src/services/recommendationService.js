@@ -4,7 +4,6 @@
  * to generate personalized destination recommendations using Gemini AI.
  */
 
-const env = require('../config/env');
 const { cache, CACHE_TTL } = require('./cacheService');
 const amadeusService = require('./amadeusService');
 const unsplashService = require('./unsplashService');
@@ -119,7 +118,7 @@ const getSeasonalRecommendations = async (month) => {
  * @param {object} preferences - User preferences
  * @returns {Promise<Array>} Matching destinations
  */
-const getAiSuggestions = async (query, preferences = {}) => {
+const getAiSuggestions = async (query, _preferences = {}) => {
   try {
     // Parse query intent using keyword matching (Gemini enhancement optional)
     const intent = parseQueryIntent(query);
@@ -215,7 +214,8 @@ const getCategoryBasedRecommendations = async (signals) => {
 
   try {
     return await amadeusService.getRecommendedDestinations(category);
-  } catch {
+  } catch (err) {
+    console.error('recommendationService: Amadeus category fetch failed:', err.message);
     return [];
   }
 };
@@ -332,7 +332,8 @@ const enrichWithImages = async (destinations) => {
               ? { url: photo.url?.regular || photo.url, photographer: photo.photographer?.name || '', attribution: photo.attribution || '' }
               : { url: `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format`, photographer: '', attribution: '' },
           };
-        } catch {
+        } catch (err) {
+          console.error('recommendationService: unsplash fetch failed for', dest.name || dest.city, err.message);
           return {
             ...dest,
             image: { url: `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format`, photographer: '', attribution: '' },
@@ -341,7 +342,8 @@ const enrichWithImages = async (destinations) => {
       })
     );
     return enriched;
-  } catch {
+  } catch (err) {
+    console.error('recommendationService: batch enrichment failed:', err.message);
     return destinations;
   }
 };

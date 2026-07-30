@@ -5,7 +5,7 @@ import {
   ArrowLeft, Plus, Trash2, ChevronUp, ChevronDown, MapPin, Calendar,
   FileText, Eye, Send, GripVertical,
 } from 'lucide-react';
-import Button from '../components/common/Button';
+import Button from '../components/ui/Button';
 
 const EMPTY_STOP = { city: '', country: '', startDate: '', endDate: '', activities: [''], notes: '' };
 

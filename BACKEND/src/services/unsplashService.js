@@ -5,7 +5,7 @@
  */
 
 const axios = require('axios');
-const env = require('../config/env');
+const { env } = require('../config/env');
 
 const BASE_URL = 'https://api.unsplash.com';
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Send, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
-import Button from '../components/common/Button';
+import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
@@ -41,11 +41,15 @@ export default function LoginScreen() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (credentialResponse) => {
     setError('');
     try {
       setLoading(true);
-      const user = await googleLogin();
+      const idToken = credentialResponse?.credential || credentialResponse?.idToken;
+      if (!idToken) {
+        throw new Error('No ID token received from Google.');
+      }
+      const user = await googleLogin(idToken);
       redirectAfterAuth(user);
     } catch (googleError) {
       setError(googleError.message || 'Google login is unavailable.');

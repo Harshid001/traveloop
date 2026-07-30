@@ -10,7 +10,10 @@ const User = require('../models/User');
 // @route   GET /api/users
 // @access  Private/Admin
 const getUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({});
+  if (!req.user || req.user.role !== 'admin') {
+    return errorResponse(res, 403, 'Not authorized to view all users');
+  }
+  const users = await User.find({}).select('-password');
   successResponse(res, 200, 'Users fetched successfully', users);
 });
 

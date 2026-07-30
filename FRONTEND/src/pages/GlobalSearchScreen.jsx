@@ -2,13 +2,15 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Bookmark, CalendarDays, MapPin, Search, StickyNote, X } from 'lucide-react';
-import { demoMyTrips, destinations, latestTrips, topTrips } from '../data/trips';
-import MobileBottomNav from '../components/common/MobileBottomNav';
+import { useGetDestinationsQuery, useGetTripsQuery } from '../services/apiSlice';
+import MobileBottomNav from '../components/ui/MobileBottomNav';
 
 const recentSearches = ['Bali beaches', 'budget Tokyo', 'packing passport', 'Europe Explorer'];
 
 export default function GlobalSearchScreen() {
   const navigate = useNavigate();
+  const { data: destinations = [] } = useGetDestinationsQuery();
+  const { data: trips = [] } = useGetTripsQuery({});
   const [query, setQuery] = useState('');
   const [recent, setRecent] = useState(recentSearches);
 
@@ -18,15 +20,15 @@ export default function GlobalSearchScreen() {
     const destinationResults = destinations
       .filter((item) => `${item.name} ${item.country} ${item.description} ${item.activities.map((a) => a.category).join(' ')}`.toLowerCase().includes(text))
       .map((item) => ({ id: `destination-${item.id}`, type: 'Destination', title: item.name, subtitle: item.country, image: item.image, to: `/destinations/${item.id}`, icon: MapPin }));
-    const tripResults = [...topTrips, ...latestTrips, ...demoMyTrips]
-      .filter((item) => `${item.title} ${item.location || ''} ${item.destinations?.join(' ') || ''}`.toLowerCase().includes(text))
-      .map((item) => ({ id: `trip-${item.id}`, type: 'Trip', title: item.title, subtitle: item.location || item.destinations?.join(' -> '), image: item.image, to: `/trip/${item.id}`, icon: CalendarDays }));
+    const tripResults = trips
+      .filter((item) => `${item.title || ''} ${item.location || ''} ${(item.destinations || []).join(' ')}`.toLowerCase().includes(text))
+      .map((item) => ({ id: `trip-${item._id || item.id}`, type: 'Trip', title: item.title, subtitle: item.location || (item.destinations || []).join(' -> '), image: item.image, to: `/trip/${item._id || item.id}`, icon: CalendarDays }));
     const notes = [
       { id: 'note-1', title: 'Passport and visa copies', subtitle: 'Journal note', to: '/journal', icon: StickyNote },
       { id: 'saved-1', title: 'Saved destinations', subtitle: 'Wishlist collection', to: '/saved', icon: Bookmark },
     ].filter((item) => `${item.title} ${item.subtitle}`.toLowerCase().includes(text));
     return [...destinationResults, ...tripResults, ...notes].slice(0, 12);
-  }, [query]);
+  }, [query, destinations, trips]);
 
   const submitSearch = (value) => {
     const next = value.trim();

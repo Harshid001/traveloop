@@ -78,16 +78,15 @@ const createTrip = asyncHandler(async (req, res) => {
 // @route   PUT /api/trips/:id
 // @access  Private
 const updateTrip = asyncHandler(async (req, res) => {
-  let trip = await Trip.findOne({ _id: req.params.id, user: req.user._id });
+  const trip = await Trip.findOneAndUpdate(
+    { _id: req.params.id, user: req.user._id },
+    req.body,
+    { new: true, runValidators: true }
+  );
 
   if (!trip) {
     return errorResponse(res, 404, 'Trip not found');
   }
-
-  trip = await Trip.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
 
   successResponse(res, 200, 'Trip updated successfully', trip);
 });

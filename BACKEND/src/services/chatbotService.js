@@ -1,5 +1,5 @@
 const { GoogleGenAI } = require('@google/genai');
-const env = require('../config/env');
+const { env } = require('../config/env');
 
 const fallbackResponse = "I'm your offline Traveloop assistant! Currently, my AI connection is not configured, but I can still help you organize your trips. You can go to the 'Create Trip' page to start planning, or check out the Explore tab for destination inspiration!";
 

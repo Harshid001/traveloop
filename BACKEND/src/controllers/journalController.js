@@ -37,6 +37,13 @@ const getJournal = asyncHandler(async (req, res) => {
 const createJournal = asyncHandler(async (req, res) => {
   req.body.user = req.user._id;
 
+  if (req.body.content && typeof req.body.content === 'string') {
+    req.body.content = req.body.content
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
+      .replace(/on\w+\s*=\s*'[^']*'/gi, '');
+  }
+
   const journal = await Journal.create(req.body);
 
   successResponse(res, 201, 'Journal entry created successfully', journal);
@@ -46,6 +53,13 @@ const createJournal = asyncHandler(async (req, res) => {
 // @route   PUT /api/journals/:id
 // @access  Private
 const updateJournal = asyncHandler(async (req, res) => {
+  if (req.body.content && typeof req.body.content === 'string') {
+    req.body.content = req.body.content
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
+      .replace(/on\w+\s*=\s*'[^']*'/gi, '');
+  }
+
   const journal = await Journal.findOneAndUpdate(
     { _id: req.params.id, user: req.user._id },
     req.body,
@@ -56,7 +70,7 @@ const updateJournal = asyncHandler(async (req, res) => {
     return errorResponse(res, 404, 'Journal entry not found');
   }
 
-  successResponse(res, 200, 'Journal entry updated successfully', journal);
+  successResponse(res, 200, 'Journal updated successfully', journal);
 });
 
 // @desc    Delete journal entry

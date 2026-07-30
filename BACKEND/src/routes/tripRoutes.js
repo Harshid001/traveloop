@@ -1,5 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
+const { successResponse, errorResponse } = require('../utils/apiResponse');
 const {
   getTrips,
   getTrip,
@@ -9,30 +10,26 @@ const {
   getUpcomingTrips,
   getRecentTrips
 } = require('../controllers/tripController');
-const {
-  getItinerary,
-  upsertTripItinerary,
-  deleteTripItineraryDay,
-} = require('../controllers/itineraryController');
-const {
-  getTripBudget,
-  addTripExpense,
-  updateTripExpense,
-  deleteTripExpense,
-} = require('../controllers/budgetController');
-const {
-  getPackingItems,
-  addPackingItem,
-  updatePackingItem,
-  deletePackingItem,
-} = require('../controllers/packingController');
 const { protect } = require('../middleware/authMiddleware');
 const validateRequest = require('../middleware/validateRequest');
+const { shareLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
 router.get('/upcoming', protect, getUpcomingTrips);
 router.get('/recent', protect, getRecentTrips);
+
+router.get('/share/:shareId', shareLimiter, async (req, res) => {
+  const { shareId } = req.params;
+  try {
+    const trip = await require('../models/Trip').findOne({ shareId }).lean();
+    if (!trip) return errorResponse(res, 404, 'Trip not found');
+    successResponse(res, 200, 'Trip fetched successfully', trip);
+  } catch (e) {
+    console.error(e);
+    errorResponse(res, 500, 'Server error');
+  }
+});
 
 router.route('/')
   .get(protect, getTrips)
@@ -47,28 +44,17 @@ router.route('/')
     createTrip
   );
 
-router.route('/:tripId/itinerary')
-  .get(protect, getItinerary)
-  .post(protect, upsertTripItinerary)
-  .put(protect, upsertTripItinerary);
-
-router.delete('/:tripId/itinerary/:dayId', protect, deleteTripItineraryDay);
-
-router.get('/:tripId/budget', protect, getTripBudget);
-router.post('/:tripId/budget/expenses', protect, addTripExpense);
-router.route('/:tripId/budget/expenses/:expenseId')
-  .put(protect, updateTripExpense)
-  .delete(protect, deleteTripExpense);
-
-router.get('/:tripId/packing', protect, getPackingItems);
-router.post('/:tripId/packing/items', protect, addPackingItem);
-router.route('/:tripId/packing/items/:itemId')
-  .put(protect, updatePackingItem)
-  .delete(protect, deletePackingItem);
-
 router.route('/:id')
   .get(protect, getTrip)
-  .put(protect, updateTrip)
+  .put(protect,
+    [
+      body('title', 'Title must be a string').optional().isString(),
+      body('startDate', 'Start date must be a valid date').optional().isISO8601(),
+      body('endDate', 'End date must be a valid date').optional().isISO8601(),
+      validateRequest,
+    ],
+    updateTrip
+  )
   .delete(protect, deleteTrip);
 
 module.exports = router;

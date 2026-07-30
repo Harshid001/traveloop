@@ -8,10 +8,9 @@ import {
   ChevronUp, ChevronDown, Search, Star, Hotel, Utensils, Car, Ticket,
   Save, GripVertical,
 } from 'lucide-react';
-import { destinations } from '../data/trips';
-import Button from '../components/common/Button';
+import { useGetDestinationsQuery, useCreateTripMutation } from '../services/apiSlice';
+import Button from '../components/ui/Button';
 
-/* Fix default Leaflet marker icon */
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -43,31 +42,27 @@ export default function CreateTripScreen() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedDests, setSelectedDests] = useState([]);
-  const [selectedActivities, setSelectedActivities] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [flyCenter, setFlyCenter] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const { data: destinations = [], isLoading: destsLoading } = useGetDestinationsQuery();
+  const [createTrip] = useCreateTripMutation();
 
   const filtered = searchQuery.trim()
     ? destinations.filter((d) =>
         d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.country.toLowerCase().includes(searchQuery.toLowerCase()))
+        (d.country || '').toLowerCase().includes(searchQuery.toLowerCase()))
     : destinations;
 
   const toggleDest = (dest) => {
     setSelectedDests((prev) => {
-      const exists = prev.find((d) => d.id === dest.id);
-      if (exists) return prev.filter((d) => d.id !== dest.id);
+      const exists = prev.find((d) => d.id === dest.id || d._id === dest._id);
+      if (exists) return prev.filter((d) => d.id !== dest.id && d._id !== dest._id);
       return [...prev, dest];
     });
-    setFlyCenter([dest.lat, dest.lng]);
-  };
-
-  const toggleActivity = (destId, actName) => {
-    setSelectedActivities((prev) => {
-      const curr = prev[destId] || [];
-      return { ...prev, [destId]: curr.includes(actName) ? curr.filter((a) => a !== actName) : [...curr, actName] };
-    });
+    if (dest.lat && dest.lng) setFlyCenter([dest.lat, dest.lng]);
   };
 
   const moveDest = (idx, dir) => {
@@ -80,29 +75,48 @@ export default function CreateTripScreen() {
     });
   };
 
-  const removeDest = (id) => setSelectedDests((prev) => prev.filter((d) => d.id !== id));
+  const removeDest = (id) => setSelectedDests((prev) => prev.filter((d) => d.id !== id && d._id !== id));
 
   const budget = useMemo(() => {
     let hotel = 0, transport = 0, food = 0, activity = 0;
     selectedDests.forEach((d) => {
-      hotel += Math.round(d.budgetEstimate * 0.4);
-      transport += Math.round(d.budgetEstimate * 0.25);
-      food += Math.round(d.budgetEstimate * 0.2);
-      const acts = selectedActivities[d.id] || [];
-      const destData = destinations.find((dd) => dd.id === d.id);
+      const est = d.budgetEstimate || d.budget || 2000;
+      hotel += Math.round(est * 0.4);
+      transport += Math.round(est * 0.25);
+      food += Math.round(est * 0.2);
+      const acts = [];
+      const destData = destinations.find((dd) => dd.id === d.id || dd._id === d._id);
       acts.forEach((aName) => {
-        const act = destData?.activities.find((a) => a.name === aName);
-        if (act) activity += act.cost;
+        const act = destData?.activities?.find((a) => a.name === aName);
+        if (act) activity += act.cost || 0;
       });
     });
     return { hotel, transport, food, activity, total: hotel + transport + food + activity };
-  }, [selectedDests, selectedActivities]);
+  }, [selectedDests, destinations]);
 
-  const routeLine = selectedDests.map((d) => [d.lat, d.lng]);
+  const routeLine = selectedDests
+    .filter((d) => d.lat && d.lng)
+    .map((d) => [d.lat, d.lng]);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => navigate('/my-trips'), 1500);
+  const handleSave = async () => {
+    if (selectedDests.length === 0) return;
+    setSaving(true);
+    try {
+      await createTrip({
+        title: tripName || 'My Adventure',
+        destinations: selectedDests.map((d) => d._id || d.id),
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        budget: budget.total,
+        status: 'upcoming',
+      }).unwrap();
+      setSaved(true);
+      navigate('/my-trips');
+    } catch (err) {
+      console.error('Failed to create trip:', err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -116,14 +130,14 @@ export default function CreateTripScreen() {
               <p className="text-[10px] text-textMuted hidden sm:block">{selectedDests.length} destinations selected</p>
             </div>
           </div>
-          <Button variant="primary" onClick={handleSave} className="text-xs px-3 sm:px-5 py-2 sm:py-2.5" disabled={saved}>
-            {saved ? <><Check size={14} /> Saved!</> : <><Save size={14} /> <span className="hidden sm:inline">Save Trip</span><span className="sm:hidden">Save</span></>}
+          <Button variant="primary" onClick={handleSave} className="text-xs px-3 sm:px-5 py-2 sm:py-2.5" disabled={saving || saved || selectedDests.length === 0}>
+            {saved ? <><Check size={14} /> Saved!</> : saving ? <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1" /> : null}
+            {saving ? 'Saving...' : saved ? 'Saved!' : <><Save size={14} /> <span className="hidden sm:inline">Save Trip</span><span className="sm:hidden">Save</span></>}
           </Button>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row min-h-[calc(100vh-4rem)]">
-        {/* MAP */}
         <div className="relative z-0 h-[45dvh] min-h-[320px] lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-1/2">
           <MapContainer center={[25, 40]} zoom={2} className="w-full h-full"
             scrollWheelZoom={false} zoomControl={false} dragging touchZoom doubleClickZoom>
@@ -133,17 +147,18 @@ export default function CreateTripScreen() {
             />
             <FlyTo center={flyCenter} />
 
-            {destinations.map((d) => {
-              const isSelected = selectedDests.some((s) => s.id === d.id);
+            {destinations.filter((d) => d.lat && d.lng).map((d) => {
+              const dId = d._id || d.id;
+              const isSelected = selectedDests.some((s) => (s._id || s.id) === dId);
               return (
-                <Marker key={d.id} position={[d.lat, d.lng]} icon={isSelected ? selectedIcon : defaultIcon}
+                <Marker key={dId} position={[d.lat, d.lng]} icon={isSelected ? selectedIcon : defaultIcon}
                   eventHandlers={{ click: () => toggleDest(d) }}>
                   <Popup>
                     <div className="text-center min-w-[140px]">
-                      <img src={d.image} alt={d.name} className="w-full h-20 object-cover rounded-lg mb-2" />
+                      {d.image && <img src={d.image} alt={d.name} className="w-full h-20 object-cover rounded-lg mb-2" />}
                       <p className="font-semibold text-sm">{d.name}</p>
                       <p className="text-xs text-slate-500">{d.country}</p>
-                      <p className="text-xs font-bold text-primary mt-1">${d.budgetEstimate.toLocaleString()}</p>
+                      <p className="text-xs font-bold text-primary mt-1">${(d.budgetEstimate || d.budget || 0).toLocaleString()}</p>
                     </div>
                   </Popup>
                 </Marker>
@@ -162,11 +177,8 @@ export default function CreateTripScreen() {
           )}
         </div>
 
-        {/* TRIP BUILDER */}
         <div className="lg:w-1/2 overflow-y-auto">
           <div className="p-4 sm:p-6 space-y-6">
-
-            {/* Trip Details */}
             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-soft">
               <h3 className="font-poppins text-sm font-bold text-textDark mb-3">Trip Details</h3>
               <input value={tripName} onChange={(e) => setTripName(e.target.value)}
@@ -186,49 +198,56 @@ export default function CreateTripScreen() {
               </div>
             </div>
 
-            {/* Search Destinations */}
             <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-soft">
               <h3 className="font-poppins text-sm font-bold text-textDark mb-3">Select Destinations</h3>
               <div className="relative mb-4">
                 <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search Paris, Tokyo, Bali..."
+                  placeholder="Search destinations..."
                   className="input-field text-xs py-2.5 pl-10" />
               </div>
 
-              <div className="grid max-h-64 grid-cols-2 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-3">
-                {filtered.map((d) => {
-                  const selected = selectedDests.some((s) => s.id === d.id);
-                  return (
-                    <motion.button key={d.id} whileTap={{ scale: 0.96 }}
-                      onClick={() => toggleDest(d)}
-                      className={`relative rounded-xl overflow-hidden h-24 group text-left transition-all ${selected ? 'ring-2 ring-primary ring-offset-1' : 'ring-1 ring-slate-100'}`}>
-                      <img src={d.image} alt={d.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                      {selected && <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center"><Check size={11} className="text-white" /></div>}
-                      <div className="absolute bottom-0 left-0 p-2">
-                        <p className="text-white text-xs font-semibold leading-tight">{d.name}</p>
-                        <p className="text-white/60 text-[9px]">{d.country}</p>
-                      </div>
-                      <div className="absolute bottom-1.5 right-2 flex items-center gap-0.5">
-                        <Star size={8} className="fill-yellow-400 text-yellow-400" />
-                        <span className="text-white text-[9px] font-medium">{d.rating}</span>
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
+              {destsLoading ? (
+                <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
+              ) : (
+                <div className="grid max-h-64 grid-cols-2 gap-2.5 overflow-y-auto pr-1 sm:grid-cols-3">
+                  {filtered.map((d) => {
+                    const dId = d._id || d.id;
+                    const selected = selectedDests.some((s) => (s._id || s.id) === dId);
+                    const img = d.image || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=400&q=80';
+                    return (
+                      <motion.button key={dId} whileTap={{ scale: 0.96 }}
+                        onClick={() => toggleDest(d)}
+                        className={`relative rounded-xl overflow-hidden h-24 group text-left transition-all ${selected ? 'ring-2 ring-primary ring-offset-1' : 'ring-1 ring-slate-100'}`}>
+                        <img src={img} alt={d.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                        {selected && <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center"><Check size={11} className="text-white" /></div>}
+                        <div className="absolute bottom-0 left-0 p-2">
+                          <p className="text-white text-xs font-semibold leading-tight">{d.name}</p>
+                          <p className="text-white/60 text-[9px]">{d.country}</p>
+                        </div>
+                        {d.rating && (
+                          <div className="absolute bottom-1.5 right-2 flex items-center gap-0.5">
+                            <Star size={8} className="fill-yellow-400 text-yellow-400" />
+                            <span className="text-white text-[9px] font-medium">{d.rating}</span>
+                          </div>
+                        )}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {/* Selected Destinations & Activities */}
             {selectedDests.length > 0 && (
               <div className="space-y-3">
                 <h3 className="font-poppins text-sm font-bold text-textDark">Your Route ({selectedDests.length} stops)</h3>
                 {selectedDests.map((dest, idx) => {
-                  const fullDest = destinations.find((d) => d.id === dest.id);
-                  const selActs = selectedActivities[dest.id] || [];
+                  const dId = dest._id || dest.id;
+                  const fullDest = destinations.find((d) => (d._id || d.id) === dId);
+                  const img = dest.image || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=400&q=80';
                   return (
-                    <motion.div key={dest.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
+                    <motion.div key={dId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                       className="bg-white rounded-2xl border border-slate-100 shadow-soft overflow-hidden">
                       <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-primary/5 to-white border-b border-slate-50">
                         <div className="flex flex-col gap-0.5">
@@ -237,32 +256,12 @@ export default function CreateTripScreen() {
                         </div>
                         <GripVertical size={14} className="text-slate-300" />
                         <span className="w-6 h-6 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">{idx + 1}</span>
-                        <img src={dest.image} alt={dest.name} className="w-8 h-8 rounded-lg object-cover" />
+                        <img src={img} alt={dest.name} className="w-8 h-8 rounded-lg object-cover" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-textDark truncate">{dest.name}, {dest.country}</p>
-                          <p className="text-[10px] text-textMuted">${dest.budgetEstimate.toLocaleString()} est. · {fullDest.activities.length} activities</p>
+                          <p className="text-sm font-semibold text-textDark truncate">{dest.name}{dest.country ? `, ${dest.country}` : ''}</p>
+                          <p className="text-[10px] text-textMuted">${(dest.budgetEstimate || dest.budget || 0).toLocaleString()} est. · {fullDest?.activities?.length || 0} activities</p>
                         </div>
-                        <button aria-label={`Remove ${dest.name}`} onClick={() => removeDest(dest.id)} className="w-9 h-9 rounded-full bg-danger/10 flex items-center justify-center text-danger hover:bg-danger/20 transition-colors"><Trash2 size={12} /></button>
-                      </div>
-
-                      <div className="p-3">
-                        <p className="text-[10px] font-semibold text-textMuted uppercase tracking-wider mb-2">Pick Activities</p>
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                          {fullDest.activities.map((act) => {
-                            const isAct = selActs.includes(act.name);
-                            return (
-                              <button key={act.name} onClick={() => toggleActivity(dest.id, act.name)}
-                                className={`flex min-h-14 items-center gap-2 p-2 rounded-xl text-left transition-all ${isAct ? 'bg-primary/5 ring-1 ring-primary/20' : 'bg-slate-50 hover:bg-slate-100'}`}>
-                                <img src={act.image} alt={act.name} className="w-9 h-9 rounded-lg object-cover shrink-0" loading="lazy" />
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[10px] font-semibold text-textDark truncate">{act.name}</p>
-                                  <p className="text-[9px] text-textMuted">${act.cost} · {act.duration}</p>
-                                </div>
-                                {isAct && <Check size={12} className="text-primary shrink-0" />}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <button aria-label={`Remove ${dest.name}`} onClick={() => removeDest(dId)} className="w-9 h-9 rounded-full bg-danger/10 flex items-center justify-center text-danger hover:bg-danger/20 transition-colors"><Trash2 size={12} /></button>
                       </div>
                     </motion.div>
                   );
@@ -270,7 +269,6 @@ export default function CreateTripScreen() {
               </div>
             )}
 
-            {/* Budget Estimation */}
             {selectedDests.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                 className="bg-gradient-to-br from-primary to-accent rounded-2xl p-5 text-white">
@@ -296,10 +294,9 @@ export default function CreateTripScreen() {
               </motion.div>
             )}
 
-            {/* Save */}
             <div className="pb-8">
-              <Button variant="primary" onClick={handleSave} className="w-full py-4 text-sm" disabled={saved || selectedDests.length === 0}>
-                {saved ? <><Check size={16} /> Trip Saved!</> : <><Save size={16} /> Save Trip</>}
+              <Button variant="primary" onClick={handleSave} className="w-full py-4 text-sm" disabled={saving || saved || selectedDests.length === 0}>
+                {saving ? 'Saving...' : saved ? 'Trip Saved!' : 'Save Trip'}
               </Button>
             </div>
           </div>

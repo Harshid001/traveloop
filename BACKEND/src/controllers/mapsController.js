@@ -15,11 +15,11 @@ const geocode = async (req, res) => {
     }
 
     const cacheKey = `maps:geocode:${address}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.geocode(address);
-    cache.set(cacheKey, result, CACHE_TTL.DIRECTIONS);
+    await cache.set(cacheKey, result, CACHE_TTL.DIRECTIONS);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -42,11 +42,11 @@ const reverseGeocode = async (req, res) => {
     }
 
     const cacheKey = `maps:reverse-geocode:${lat}:${lng}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.reverseGeocode(lat, lng);
-    cache.set(cacheKey, result, CACHE_TTL.DIRECTIONS);
+    await cache.set(cacheKey, result, CACHE_TTL.DIRECTIONS);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -69,11 +69,11 @@ const getDirections = async (req, res) => {
     }
 
     const cacheKey = `maps:directions:${origin}:${destination}:${mode}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.getDirections(origin, destination, mode);
-    cache.set(cacheKey, result, CACHE_TTL.DIRECTIONS);
+    await cache.set(cacheKey, result, CACHE_TTL.DIRECTIONS);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -96,11 +96,11 @@ const getDistanceMatrix = async (req, res) => {
     }
 
     const cacheKey = `maps:distance:${origins}:${destinations}:${mode}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.getDistanceMatrix(origins, destinations, mode);
-    cache.set(cacheKey, result, CACHE_TTL.DIRECTIONS);
+    await cache.set(cacheKey, result, CACHE_TTL.DIRECTIONS);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {

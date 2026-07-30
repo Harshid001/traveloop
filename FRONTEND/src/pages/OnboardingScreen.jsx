@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, ArrowRight, ArrowLeft } from 'lucide-react';
 import { slides } from './slides';
-import Button from '../components/common/Button';
+import Button from '../components/ui/Button';
 
 const slideVariants = {
   enter: (dir) => ({ x: dir > 0 ? 280 : -280, opacity: 0 }),

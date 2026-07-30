@@ -6,6 +6,7 @@ const tripSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
     title: {
       type: String,
@@ -31,6 +32,7 @@ const tripSchema = new mongoose.Schema(
     startDate: {
       type: Date,
       required: [true, 'Please add a start date'],
+      index: true,
     },
     endDate: {
       type: Date,
@@ -74,10 +76,21 @@ const tripSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // Public share identifier for read‑only itinerary links
+    shareId: {
+      type: String,
+      default: require('uuid').v4,
+      index: true,
+      select: false,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+tripSchema.index({ user: 1, startDate: -1 });
+tripSchema.index({ user: 1, status: 1 });
+tripSchema.index({ user: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Trip', tripSchema);

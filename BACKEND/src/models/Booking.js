@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bookingSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    tripId: { type: String, default: '' },
+    tripId: { type: mongoose.Schema.Types.ObjectId, ref: 'Trip', default: null },
     tripTitle: { type: String, required: true },
     travelers: { type: Number, default: 1, min: 1 },
     travelDate: { type: String, required: true },

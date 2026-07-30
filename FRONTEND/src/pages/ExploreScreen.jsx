@@ -13,24 +13,28 @@ import {
   SlidersHorizontal,
   Star,
 } from 'lucide-react';
-import { destinations } from '../data/trips';
-import MobileBottomNav from '../components/common/MobileBottomNav';
+import { useGetDestinationsQuery } from '../services/apiSlice';
+import MobileBottomNav from '../components/ui/MobileBottomNav';
 
 const CATS = ['All', 'Sightseeing', 'Adventure', 'Beach', 'Food Tour', 'Shopping', 'Nightlife', 'Wellness', 'Family', 'Honeymoon', 'Budget Friendly'];
 const SORTS = ['Popular', 'Highest rated', 'Low budget', 'High budget', 'Nearby'];
 
 function categoryMatches(destination, category) {
   if (category === 'All') return true;
-  if (category === 'Budget Friendly') return destination.budgetEstimate <= 1800;
+  if (category === 'Budget Friendly') return (destination.budgetEstimate || destination.budget || 9999) <= 1800;
   if (category === 'Honeymoon') return ['Paris', 'Bali', 'Maldives', 'Switzerland'].includes(destination.name);
   if (category === 'Family') return ['Singapore', 'London', 'Dubai', 'Goa'].includes(destination.name);
-  return destination.activities.some((activity) => activity.category === category);
+  const acts = destination.activities || [];
+  return acts.some((activity) => (activity.category || activity.type || '') === category);
 }
 
 export default function ExploreScreen() {
   const navigate = useNavigate();
+  const { data: destinations = [], isLoading: destsLoading } = useGetDestinationsQuery();
   const [query, setQuery] = useState('');
-  const [liked, setLiked] = useState(() => JSON.parse(window.localStorage.getItem('traveloop.saved.destinations') || '{}'));
+  const [liked, setLiked] = useState(() => {
+    try { return JSON.parse(window.localStorage.getItem('traveloop.saved.destinations') || '{}'); } catch { return {}; }
+  });
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('Popular');
   const [view, setView] = useState('list');
@@ -50,7 +54,7 @@ export default function ExploreScreen() {
       if (sort === 'Nearby') return Math.abs(a.lat - 20) - Math.abs(b.lat - 20);
       return b.rating * 100 - b.budgetEstimate / 100 - (a.rating * 100 - a.budgetEstimate / 100);
     });
-  }, [category, query, sort]);
+  }, [category, query, sort, destinations]);
 
   const toggleSaved = (id) => {
     setLiked((current) => {
@@ -67,7 +71,7 @@ export default function ExploreScreen() {
           <button aria-label="Back to home" onClick={() => navigate('/home')} className="tap-target rounded-xl bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100"><ArrowLeft size={18} /></button>
           <div className="flex-1">
             <h1 className="font-poppins text-lg font-bold text-textDark">Explore</h1>
-            <p className="text-xs text-textMuted">{filtered.length} destinations matched</p>
+            <p className="text-xs text-textMuted">{destsLoading ? 'Loading...' : `${filtered.length} destinations matched`}</p>
           </div>
           <div className="hidden rounded-xl border border-slate-200 bg-white p-1 sm:flex">
             <button aria-label="List view" onClick={() => setView('list')} className={`tap-target rounded-lg ${view === 'list' ? 'bg-primary text-white' : 'text-slate-400'}`}><List size={16} /></button>

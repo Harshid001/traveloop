@@ -14,7 +14,7 @@ import {
   User,
   Wallet,
 } from 'lucide-react';
-import Button from '../components/common/Button';
+import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 
 const copy = {
@@ -85,11 +85,18 @@ export default function AuthFlowScreen({ mode = 'forgot' }) {
     setLoading(true);
     try {
       if (mode === 'forgot') await auth.forgotPassword({ email: form.email });
-      if (mode === 'reset') await auth.resetPassword({ email: form.email, password: form.password });
-      if (mode === 'verify') await auth.verifyEmail({ email: form.email, code: form.code });
+      if (mode === 'reset') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        await auth.resetPassword({ token, email: form.email, password: form.password });
+      }
+      if (mode === 'verify') {
+        // "code" field now represents the verification token
+        await auth.verifyEmail({ token: form.code, email: form.email });
+      }
       if (mode === 'complete') await auth.updateProfile(form);
       setMessage(mode === 'complete' ? 'Profile completed. Your dashboard is ready.' : 'Success. You can continue.');
-      setTimeout(() => navigate(mode === 'complete' ? '/home' : '/login'), 900);
+      navigate(mode === 'complete' ? '/home' : '/login');
     } catch (submitError) {
       setError(submitError.message || 'Something went wrong.');
     } finally {

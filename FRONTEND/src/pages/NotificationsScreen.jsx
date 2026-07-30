@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Bell, CheckCheck, Clock, PackageCheck, Trash2, WalletCards } from 'lucide-react';
-import MobileBottomNav from '../components/common/MobileBottomNav';
+import MobileBottomNav from '../components/ui/MobileBottomNav';
 
 const initialNotifications = [
   { id: 1, type: 'trip', title: 'Europe Explorer starts soon', message: 'Review your itinerary and hotel notes before departure.', time: 'Today', read: false, icon: Clock },

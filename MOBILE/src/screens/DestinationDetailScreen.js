@@ -40,10 +40,13 @@ export default function DestinationDetailScreen({ navigation, route }) {
   // Derived budget based on duration
   const budget = useMemo(() => {
     if (!dest) return null;
-    const { flights, hotelPerNight, foodPerDay } = dest.baseBudget;
-    const hotelTotal = hotelPerNight * (days - 1 > 0 ? days - 1 : 1); // nights
+    const base = dest.baseBudget || {};
+    const flights = base.flights || 500;
+    const hotelPerNight = base.hotelPerNight || 100;
+    const foodPerDay = base.foodPerDay || 40;
+    const hotelTotal = hotelPerNight * (days - 1 > 0 ? days - 1 : 1);
     const foodTotal = foodPerDay * days;
-    const activitiesTotal = 150 * (days / 2); // rough estimate
+    const activitiesTotal = 150 * (days / 2);
     
     const totalUSD = flights + hotelTotal + foodTotal + activitiesTotal;
     
@@ -69,7 +72,7 @@ export default function DestinationDetailScreen({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header Image Gallery */}
         <View className="relative w-full h-[350px]">
-          <Image source={{ uri: dest.images[0] }} className="w-full h-full" resizeMode="cover" />
+          <Image source={{ uri: dest.images?.[0] || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800' }} className="w-full h-full" resizeMode="cover" />
           
           <View className="absolute inset-0 bg-black/20" />
           
@@ -104,17 +107,17 @@ export default function DestinationDetailScreen({ navigation, route }) {
           <View className="items-center">
             <View className="flex-row items-center mb-1">
               <Star color="#f59e0b" fill="#f59e0b" size={16} />
-              <Text className="text-slate-900 font-bold ml-1">{dest.rating}</Text>
+              <Text className="text-slate-900 font-bold ml-1">{dest.rating ?? '4.5'}</Text>
             </View>
-            <Text className="text-slate-500 text-xs">{dest.reviewsCount.toLocaleString()} reviews</Text>
+              <Text className="text-slate-500 text-xs">{(dest.reviewsCount ?? 0).toLocaleString()} reviews</Text>
           </View>
           <View className="w-[1px] bg-slate-200" />
           <View className="items-center">
             <View className="flex-row items-center mb-1">
               <CloudSun color="#0F9D8F" size={16} />
-              <Text className="text-slate-900 font-bold ml-1">{dest.weather.temp}</Text>
+              <Text className="text-slate-900 font-bold ml-1">{dest.weather?.temp ?? '22°C'}</Text>
             </View>
-            <Text className="text-slate-500 text-xs">{dest.weather.condition}</Text>
+            <Text className="text-slate-500 text-xs">{dest.weather?.condition ?? 'Clear'}</Text>
           </View>
         </View>
 

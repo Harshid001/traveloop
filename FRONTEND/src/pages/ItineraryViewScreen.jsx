@@ -4,7 +4,7 @@ import {
   ArrowLeft, MapPin, Calendar, Clock, Star, DollarSign, Globe,
   Plane, Share2, PenLine, Printer,
 } from 'lucide-react';
-import Button from '../components/common/Button';
+import Button from '../components/ui/Button';
 
 const itinerary = {
   name: 'European Adventure',
@@ -188,7 +188,23 @@ export default function ItineraryViewScreen() {
           <Button variant="secondary" onClick={() => navigate('/itinerary-builder')} className="flex-1 py-3.5 text-xs">
             <PenLine size={14} /> Edit
           </Button>
-          <Button variant="primary" className="flex-1 py-3.5 text-xs">
+          <Button
+            variant="primary"
+            className="flex-1 py-3.5 text-xs"
+            onClick={async () => {
+              try {
+                const shareUrl = `${import.meta.env.VITE_CLIENT_URL || 'http://localhost:5173'}/public-trip/${itinerary.shareId || ''}`;
+                if (navigator.share) {
+                  await navigator.share({ title: itinerary.name, url: shareUrl });
+                } else {
+                  await navigator.clipboard.writeText(shareUrl);
+                  alert('Share link copied to clipboard');
+                }
+              } catch (e) {
+                console.error('Share failed', e);
+              }
+            }}
+          >
             <Share2 size={14} /> Share Trip
           </Button>
         </div>

@@ -44,8 +44,20 @@ const getItinerary = asyncHandler(async (req, res) => {
 const addDayToItinerary = asyncHandler(async (req, res) => {
   let itinerary = await Itinerary.findOne({ trip: req.params.tripId, user: req.user._id });
 
+  if (req.body.date) {
+    const newDate = new Date(req.body.date);
+    const existingDays = itinerary ? itinerary.days : [];
+    const hasOverlap = existingDays.some((day) => {
+      if (!day.date) return false;
+      const existingDate = new Date(day.date);
+      return existingDate.getTime() === newDate.getTime();
+    });
+    if (hasOverlap) {
+      return errorResponse(res, 400, 'A day with this date already exists in the itinerary');
+    }
+  }
+
   if (!itinerary) {
-    // Should have been created with trip, but just in case
     itinerary = await Itinerary.create({
       user: req.user._id,
       trip: req.params.tripId,

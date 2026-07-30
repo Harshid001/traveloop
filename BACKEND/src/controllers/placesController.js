@@ -15,11 +15,11 @@ const searchPlaces = async (req, res) => {
     }
 
     const cacheKey = `places:search:${q}:${lat}:${lng}:${radius}:${type}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.searchPlaces(q, lat, lng, radius, type);
-    cache.set(cacheKey, result, CACHE_TTL.SEARCH);
+    await cache.set(cacheKey, result, CACHE_TTL.SEARCH);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -42,11 +42,11 @@ const getNearbyPlaces = async (req, res) => {
     }
 
     const cacheKey = `places:nearby:${lat}:${lng}:${radius}:${type}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.getNearbyPlaces(lat, lng, radius, type);
-    cache.set(cacheKey, result, CACHE_TTL.PLACES);
+    await cache.set(cacheKey, result, CACHE_TTL.PLACES);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -69,11 +69,11 @@ const getPlaceDetails = async (req, res) => {
     }
 
     const cacheKey = `places:details:${placeId}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.getPlaceDetails(placeId);
-    cache.set(cacheKey, result, CACHE_TTL.PLACES);
+    await cache.set(cacheKey, result, CACHE_TTL.PLACES);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -97,11 +97,11 @@ const getPlacePhotos = async (req, res) => {
     }
 
     const cacheKey = `places:photos:${photoReference}:${maxWidth}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.getPlacePhotos(photoReference, maxWidth);
-    cache.set(cacheKey, result, CACHE_TTL.IMAGES);
+    await cache.set(cacheKey, result, CACHE_TTL.IMAGES);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {
@@ -124,11 +124,11 @@ const autocomplete = async (req, res) => {
     }
 
     const cacheKey = `places:autocomplete:${input}:${types}:${lat}:${lng}`;
-    const cached = cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
     const result = await googleMapsService.autocomplete(input, types, lat, lng);
-    cache.set(cacheKey, result, CACHE_TTL.AUTOCOMPLETE);
+    await cache.set(cacheKey, result, CACHE_TTL.AUTOCOMPLETE);
 
     res.status(200).json({ success: true, data: result });
   } catch (error) {

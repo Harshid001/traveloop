@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Calendar, DollarSign, Plane, Clock, ChevronRight, Route as RouteIcon, Copy, Edit3, Share2, Trash2 } from 'lucide-react';
-import { demoMyTrips } from '../data/trips';
-import MobileBottomNav from '../components/common/MobileBottomNav';
-import ShareModal from '../components/common/ShareModal';
+import { useGetTripsQuery } from '../services/apiSlice';
+import MobileBottomNav from '../components/ui/MobileBottomNav';
+import ShareModal from '../components/ui/ShareModal';
 
 const TABS = [
   { key: 'all', label: 'All' },
@@ -24,11 +24,11 @@ const STATUS_STYLES = {
 export default function MyTripsScreen() {
   const navigate = useNavigate();
   const [tab, setTab] = useState('all');
-  const [tripsState, setTripsState] = useState([
-    ...demoMyTrips,
-    { id: 104, title: 'Japan Spring Draft', status: 'draft', startDate: 'Apr 5, 2027', endDate: 'Apr 14, 2027', destinations: ['Tokyo', 'Kyoto'], totalBudget: 6400, image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=900&q=80', activities: 4, distance: '520 km' },
-  ]);
+  const { data: apiTrips = [] } = useGetTripsQuery();
+  const [tripsState, setTripsState] = useState([]);
   const [shareTrip, setShareTrip] = useState(null);
+
+  useEffect(() => { if (apiTrips?.length) setTripsState(apiTrips); }, [apiTrips]); // eslint-disable-line react-hooks/set-state-in-effect
 
   const trips = tab === 'all' ? tripsState : tripsState.filter((t) => t.status === tab);
   const duplicateTrip = (trip) => setTripsState((current) => [{ ...trip, id: Date.now(), title: `${trip.title} Copy`, status: 'draft' }, ...current]);

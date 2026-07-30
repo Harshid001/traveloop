@@ -71,8 +71,8 @@ const getSimilar = async (req, res) => {
       const Destination = require('../models/Destination');
       const found = await Destination.findById(destinationId);
       if (found) destination = found;
-    } catch {
-      // Use the ID as a name fallback
+    } catch (err) {
+      console.error('Failed to load destination for similar recommendations:', err.message);
     }
 
     const similar = await recommendationService.getSimilarDestinations(destination);

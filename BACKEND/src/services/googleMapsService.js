@@ -5,7 +5,7 @@
  */
 
 const axios = require('axios');
-const env = require('../config/env');
+const { env } = require('../config/env');
 
 const BASE_URL = 'https://maps.googleapis.com/maps/api';
 
@@ -32,7 +32,7 @@ const normalizePlaceResult = (place) => {
     userRatingsTotal: place.user_ratings_total || 0,
     types: place.types || [],
     photos: (place.photos || []).map((p) => ({
-      url: `${BASE_URL}/place/photo?maxwidth=800&photoreference=${p.photo_reference}&key=${env.GOOGLE_MAPS_API_KEY}`,
+      url: `/api/maps/place-photo/${p.photo_reference}`,
       attribution: p.html_attributions ? p.html_attributions[0] : '',
     })),
     openingHours: place.opening_hours
@@ -134,7 +134,7 @@ const getPlaceDetails = async (placeId) => {
  * @returns {string} Full photo URL
  */
 const getPlacePhotos = (photoReference, maxWidth = 800) => {
-  return `${BASE_URL}/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=${env.GOOGLE_MAPS_API_KEY}`;
+  return `/api/maps/place-photo/${photoReference}?maxwidth=${maxWidth}`;
 };
 
 /**

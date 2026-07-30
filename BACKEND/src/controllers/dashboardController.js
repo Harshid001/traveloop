@@ -9,15 +9,19 @@ const asyncHandler = require('../utils/asyncHandler');
 // @access  Private
 const getDashboardSummary = asyncHandler(async (req, res) => {
   const userId = req.user._id;
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const skip = (page - 1) * limit;
 
-  const [totalTrips, upcomingTripsCount, savedPlaces, journalEntries, recentTrips, upcomingTripList, budgets] = await Promise.all([
+  const [totalTrips, upcomingTripsCount, savedPlaces, journalEntries, recentTrips, upcomingTripList, budgets, totalTripsCount] = await Promise.all([
     Trip.countDocuments({ user: userId }),
     Trip.countDocuments({ user: userId, status: 'upcoming' }),
     SavedPlace.countDocuments({ user: userId }),
     Journal.countDocuments({ user: userId }),
-    Trip.find({ user: userId }).sort({ createdAt: -1 }).limit(3),
+    Trip.find({ user: userId }).sort({ createdAt: -1 }).skip(skip).limit(limit),
     Trip.find({ user: userId, status: 'upcoming' }).sort({ startDate: 1 }).limit(1),
-    Budget.find({ user: userId })
+    Budget.find({ user: userId }),
+    Trip.countDocuments({ user: userId }),
   ]);
 
   let totalBudget = 0;
@@ -42,7 +46,13 @@ const getDashboardSummary = asyncHandler(async (req, res) => {
         totalBudget,
         totalSpent,
         remaining: totalBudget - totalSpent
-      }
+      },
+      pagination: {
+        page,
+        limit,
+        total: totalTripsCount,
+        pages: Math.ceil(totalTripsCount / limit),
+      },
     }
   });
 });

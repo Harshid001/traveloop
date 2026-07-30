@@ -5,8 +5,8 @@ import {
   ArrowLeft, Camera, Mail, Phone, MapPin, Calendar, Globe, Plane,
   Heart, Star, Save, PenLine,
 } from 'lucide-react';
-import Button from '../components/common/Button';
-import MobileBottomNav from '../components/common/MobileBottomNav';
+import Button from '../components/ui/Button';
+import MobileBottomNav from '../components/ui/MobileBottomNav';
 
 const initialUser = {
   firstName: 'Henish', lastName: 'Patel', email: 'henish@example.com',

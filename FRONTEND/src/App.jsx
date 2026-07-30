@@ -1,27 +1,35 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import OnboardingScreen from './pages/OnboardingScreen';
-import WelcomeScreen from './pages/WelcomeScreen';
-import LoginScreen from './pages/LoginScreen';
-import SignupScreen from './pages/SignupScreen';
-import HomePage from './pages/HomePage';
-import TripDetailScreen from './pages/TripDetailScreen';
-import CreateTripScreen from './pages/CreateTripScreen';
-import MyTripsScreen from './pages/MyTripsScreen';
-import ExploreScreen from './pages/ExploreScreen';
-import SavedScreen from './pages/SavedScreen';
-import ItineraryBuilderScreen from './pages/ItineraryBuilderScreen';
-import ItineraryViewScreen from './pages/ItineraryViewScreen';
-import BudgetScreen from './pages/BudgetScreen';
-import PackingScreen from './pages/PackingScreen';
-import JournalScreen from './pages/JournalScreen';
-import ProfileScreen from './pages/ProfileScreen';
-import DestinationDetailScreen from './pages/DestinationDetailScreen';
-import AuthFlowScreen from './pages/AuthFlowScreen';
-import NotificationsScreen from './pages/NotificationsScreen';
-import GlobalSearchScreen from './pages/GlobalSearchScreen';
+
+// Lazy‑loaded page components
+const OnboardingScreen = lazy(() => import('./pages/OnboardingScreen'));
+const WelcomeScreen = lazy(() => import('./pages/WelcomeScreen'));
+const LoginScreen = lazy(() => import('./pages/LoginScreen'));
+const SignupScreen = lazy(() => import('./pages/SignupScreen'));
+const HomePage = lazy(() => import('./pages/HomePage'));
+const TripDetailScreen = lazy(() => import('./pages/TripDetailScreen'));
+const CreateTripScreen = lazy(() => import('./pages/CreateTripScreen'));
+const MyTripsScreen = lazy(() => import('./pages/MyTripsScreen'));
+const ExploreScreen = lazy(() => import('./pages/ExploreScreen'));
+const SavedScreen = lazy(() => import('./pages/SavedScreen'));
+const ItineraryBuilderScreen = lazy(() => import('./pages/ItineraryBuilderScreen'));
+const ItineraryViewScreen = lazy(() => import('./pages/ItineraryViewScreen'));
+const BudgetScreen = lazy(() => import('./pages/BudgetScreen'));
+const PackingScreen = lazy(() => import('./pages/PackingScreen'));
+const JournalScreen = lazy(() => import('./pages/JournalScreen'));
+const ProfileScreen = lazy(() => import('./pages/ProfileScreen'));
+const DestinationDetailScreen = lazy(() => import('./pages/DestinationDetailScreen'));
+const AuthFlowScreen = lazy(() => import('./pages/AuthFlowScreen'));
+const NotificationsScreen = lazy(() => import('./pages/NotificationsScreen'));
+const GlobalSearchScreen = lazy(() => import('./pages/GlobalSearchScreen'));
+
 import TravelChatbot from './components/chatbot/TravelChatbot';
-import ProtectedRoute from './components/common/ProtectedRoute';
+import ProtectedRoute from './components/ui/ProtectedRoute';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import FullScreenSpinner from './components/ui/FullScreenSpinner';
 
 function PrivatePage({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
@@ -29,8 +37,11 @@ function PrivatePage({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
+    <Provider store={store}>
+        <AuthProvider>
+      <ErrorBoundary>
+      <Suspense fallback={<FullScreenSpinner />}>
+          <Routes>
         <Route path="/" element={<Navigate to="/onboarding" replace />} />
         <Route path="/onboarding" element={<OnboardingScreen />} />
         <Route path="/welcome" element={<WelcomeScreen />} />
@@ -61,7 +72,10 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/onboarding" replace />} />
       </Routes>
+          </Suspense>
+      </ErrorBoundary>
       <TravelChatbot />
     </AuthProvider>
+      </Provider>
   );
 }

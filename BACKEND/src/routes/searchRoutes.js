@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const env = require('../config/env');
+const { env } = require('../config/env');
 const User = require('../models/User');
 const { globalSearch } = require('../controllers/searchController');
 
@@ -12,7 +12,8 @@ const optionalProtect = async (req, res, next) => {
       const token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, env.JWT_SECRET);
       req.user = await User.findById(decoded.id).select('-password');
-    } catch {
+    } catch (err) {
+      console.error('Optional auth parsing failed:', err.message);
       req.user = null;
     }
   }
