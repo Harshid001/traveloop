@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import {
   ArrowLeft, Trash2, Calendar, Check,
   ChevronUp, ChevronDown, Search, Star, Hotel, Utensils, Car, Ticket,
-  Save, GripVertical, MapPin, Maximize2, Layers, Compass
+  Save, GripVertical, MapPin, Maximize2, Layers, Compass, Globe
 } from 'lucide-react';
 import { useGetDestinationsQuery, useCreateTripMutation } from '../services/apiSlice';
 import Button from '../components/ui/Button';
@@ -177,17 +177,52 @@ export default function CreateTripScreen() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [activeLayerKey, setActiveLayerKey] = useState('voyager');
+  const [customPlaces, setCustomPlaces] = useState([]);
   const [mapSearchQuery, setMapSearchQuery] = useState('');
   const [mapSearchOpen, setMapSearchOpen] = useState(false);
+  const [globalSearchResults, setGlobalSearchResults] = useState([]);
+  const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
 
-  const { data: destinations = [], isLoading: destsLoading } = useGetDestinationsQuery();
+  const { data: initialDestinations = [], isLoading: destsLoading } = useGetDestinationsQuery();
   const [createTrip] = useCreateTripMutation();
 
-  const filtered = searchQuery.trim()
-    ? destinations.filter((d) =>
-        d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (d.country || '').toLowerCase().includes(searchQuery.toLowerCase()))
-    : destinations;
+  const destinations = useMemo(() => {
+    return [...initialDestinations, ...customPlaces];
+  }, [initialDestinations, customPlaces]);
+
+  const activeLayer = mapLayers[activeLayerKey];
+
+  useEffect(() => {
+    if (!mapSearchQuery.trim() || mapSearchQuery.length < 2) {
+      setGlobalSearchResults([]);
+      setIsSearchingGlobal(false);
+      return;
+    }
+    
+    setIsSearchingGlobal(true);
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(mapSearchQuery.trim())}&limit=4`,
+          { signal: controller.signal }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setGlobalSearchResults(data);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') console.error('Geocoding search error:', err);
+      } finally {
+        setIsSearchingGlobal(false);
+      }
+    }, 450);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [mapSearchQuery]);
 
   const toggleDest = useCallback((dest) => {
     setSelectedDests((prev) => {
@@ -251,14 +286,12 @@ export default function CreateTripScreen() {
     }
   };
 
-  const activeLayer = mapLayers[activeLayerKey];
-
   const mapSearchResults = useMemo(() => {
     if (!mapSearchQuery.trim()) return [];
     const q = mapSearchQuery.toLowerCase();
     return destinations.filter((d) =>
       d.name.toLowerCase().includes(q) || (d.country || '').toLowerCase().includes(q)
-    ).slice(0, 5);
+    ).slice(0, 4);
   }, [mapSearchQuery, destinations]);
 
   const selectFromMapSearch = (dest) => {
@@ -269,6 +302,32 @@ export default function CreateTripScreen() {
     if (!isSelected) {
       toggleDest(dest);
     }
+    setMapSearchQuery('');
+    setMapSearchOpen(false);
+  };
+
+  const selectGlobalPlace = (place) => {
+    const lat = parseFloat(place.lat);
+    const lng = parseFloat(place.lon);
+    const parts = place.display_name.split(',');
+    const name = parts[0].trim();
+    const country = parts.length > 1 ? parts[parts.length - 1].trim() : '';
+
+    const newDest = {
+      _id: `geo_${place.place_id}`,
+      id: `geo_${place.place_id}`,
+      name,
+      country,
+      lat,
+      lng,
+      image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=400&q=80',
+      budgetEstimate: 1800,
+      rating: 4.8,
+    };
+
+    setCustomPlaces((prev) => [...prev.filter((p) => p._id !== newDest._id), newDest]);
+    toggleDest(newDest);
+    setFlyCenter([lat, lng]);
     setMapSearchQuery('');
     setMapSearchOpen(false);
   };
@@ -328,8 +387,16 @@ export default function CreateTripScreen() {
             </div>
 
             {/* Map Search Dropdown */}
-            {mapSearchOpen && mapSearchResults.length > 0 && (
-              <div className="mt-2 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {mapSearchOpen && (mapSearchResults.length > 0 || globalSearchResults.length > 0 || isSearchingGlobal) && (
+              <div className="mt-2 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
+                {isSearchingGlobal && globalSearchResults.length === 0 && mapSearchResults.length === 0 && (
+                  <div className="px-4 py-3 flex items-center gap-2 text-xs text-slate-500 font-medium">
+                    <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full" />
+                    <span>Searching global locations...</span>
+                  </div>
+                )}
+
+                {/* Local Featured Destinations */}
                 {mapSearchResults.map((dest) => {
                   const isSel = selectedDests.some((s) => (s._id || s.id) === (dest._id || dest.id));
                   return (
@@ -342,11 +409,38 @@ export default function CreateTripScreen() {
                         <MapPin size={13} className={isSel ? 'text-primary' : 'text-slate-400'} />
                         <div className="truncate">
                           <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{dest.name}</p>
-                          <p className="text-[10px] text-slate-500 truncate">{dest.country}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{dest.country || 'Featured destination'}</p>
                         </div>
                       </div>
                       <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${isSel ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
                         {isSel ? 'Added' : 'Fly to'}
+                      </span>
+                    </button>
+                  );
+                })}
+
+                {/* Global OpenStreetMap Geocoding Results */}
+                {globalSearchResults.map((place) => {
+                  const parts = place.display_name.split(',');
+                  const name = parts[0].trim();
+                  const country = parts.slice(1, 3).join(', ').trim();
+                  const isSel = selectedDests.some((s) => (s._id || s.id) === `geo_${place.place_id}`);
+
+                  return (
+                    <button
+                      key={place.place_id}
+                      onClick={() => selectGlobalPlace(place)}
+                      className="w-full px-3.5 py-2.5 text-left flex items-center justify-between hover:bg-accent/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Globe size={13} className="text-accent shrink-0" />
+                        <div className="truncate">
+                          <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{country || 'Global place'}</p>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${isSel ? 'bg-primary text-white' : 'bg-accent/20 text-accent dark:text-accent-light'}`}>
+                        {isSel ? 'Added' : '+ Add'}
                       </span>
                     </button>
                   );
