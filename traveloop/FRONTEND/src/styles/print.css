@@ -1,0 +1,34 @@
+/* Print stylesheet for Traveloop itineraries */
+
+@media print {
+  /* Hide navigation, buttons, and any interactive elements */
+  .print\:hidden, .no-print, .header, .footer, button, a, .share-button, .edit-button {
+    display: none !important;
+  }
+
+  /* Ensure background is white and text is black */
+  body, .bg-surface-50, .bg-white, .bg-white\/10, .bg-white\/15 {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Expand content width for printing */
+  .min-h-screen, .container, .max-w-5xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Remove box shadows and borders that don\'t print well */
+  .shadow-hover, .shadow-soft, .border, .shadow {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Ensure images retain their aspect ratio */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
