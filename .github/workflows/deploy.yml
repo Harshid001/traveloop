@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        default: production
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via docker-compose
+        run: |
+          scp docker-compose.yml ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/app/traveloop/
+          scp .dockerignore ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/app/traveloop/
+          scp -r traveloop/BACKEND/Dockerfile ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/app/traveloop/traveloop/BACKEND/
+          scp -r traveloop/FRONTEND/Dockerfile ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/app/traveloop/traveloop/FRONTEND/
+          scp traveloop/FRONTEND/nginx.conf ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/app/traveloop/traveloop/FRONTEND/
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd /app/traveloop && docker compose -f docker-compose.yml -p traveloop-${{ inputs.environment }} up -d --build"

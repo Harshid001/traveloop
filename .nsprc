@@ -1,0 +1,26 @@
+{
+  "GHSA-qwww-vcr4-c8h2": {
+    "active": false,
+    "notes": "React Router RSC CSRF — NOT exploitable: app uses <BrowserRouter>, not createBrowserRouter/RouterProvider. No RSC mode actions exist."
+  },
+  "GHSA-mh99-v99m-4gvg": {
+    "active": false,
+    "notes": "brace-expansion DoS in Jest/expo/MOBILE dev toolchains only. Not in production dependencies."
+  },
+  "GHSA-qx2v-qp2m-jg93": {
+    "active": false,
+    "notes": "PostCSS XSS in MOBILE build toolchain (Expo). Not exposed at runtime."
+  },
+  "GHSA-6g55-p6wh-862q": {
+    "active": false,
+    "notes": "PostCSS file read in MOBILE build toolchain (Expo). Not exposed at runtime."
+  },
+  "GHSA-r28c-9q8g-f849": {
+    "active": false,
+    "notes": "PostCSS path traversal in MOBILE build toolchain (Expo). Not exposed at runtime."
+  },
+  "GHSA-w5hq-g745-h8pq": {
+    "active": false,
+    "notes": "uuid moderate in MOBILE transitive dependencies (xcode/@expo). Backend updated to uuid@11."
+  }
+}
