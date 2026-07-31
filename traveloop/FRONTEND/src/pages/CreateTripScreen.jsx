@@ -120,6 +120,30 @@ function FlyTo({ center }) {
   return null;
 }
 
+function CustomZoomControls() {
+  const map = useMap();
+  return (
+    <div className="flex items-center border-l border-slate-200 dark:border-slate-800 pl-1.5 ml-1">
+      <button
+        type="button"
+        onClick={() => map.zoomIn()}
+        className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+        title="Zoom in"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        onClick={() => map.zoomOut()}
+        className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+        title="Zoom out"
+      >
+        −
+      </button>
+    </div>
+  );
+}
+
 export default function CreateTripScreen() {
   const navigate = useNavigate();
   const [tripName, setTripName] = useState('');
@@ -131,6 +155,8 @@ export default function CreateTripScreen() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [activeLayerKey, setActiveLayerKey] = useState('voyager');
+  const [mapSearchQuery, setMapSearchQuery] = useState('');
+  const [mapSearchOpen, setMapSearchOpen] = useState(false);
 
   const { data: destinations = [], isLoading: destsLoading } = useGetDestinationsQuery();
   const [createTrip] = useCreateTripMutation();
@@ -203,9 +229,6 @@ export default function CreateTripScreen() {
     }
   };
 
-  const [mapSearchQuery, setMapSearchQuery] = useState('');
-  const [mapSearchOpen, setMapSearchOpen] = useState(false);
-
   const activeLayer = mapLayers[activeLayerKey];
 
   const mapSearchResults = useMemo(() => {
@@ -230,15 +253,16 @@ export default function CreateTripScreen() {
 
   return (
     <AppLayout>
+      {/* Top Page Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <button aria-label="Back to home" onClick={() => navigate('/home')} className="tap-target rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"><ArrowLeft size={18} /></button>
+          <button aria-label="Back to home" onClick={() => navigate('/home')} className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"><ArrowLeft size={18} /></button>
           <div>
-            <h1 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Create Interactive Trip Itinerary</h1>
+            <h1 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Create Trip Itinerary</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">{selectedDests.length} destinations selected · Interactive live map with search</p>
           </div>
         </div>
-        <Button variant="primary" onClick={handleSave} className="text-xs px-5 py-2.5 shadow-md" disabled={saving || saved || selectedDests.length === 0}>
+        <Button variant="primary" onClick={handleSave} className="text-xs px-5 py-2.5 shadow-md font-bold" disabled={saving || saved || selectedDests.length === 0}>
           {saved ? <><Check size={14} /> Saved!</> : saving ? <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1" /> : null}
           {saving ? 'Saving...' : saved ? 'Saved!' : <><Save size={14} /> Save Trip</>}
         </Button>
@@ -246,11 +270,11 @@ export default function CreateTripScreen() {
 
       <div className="w-full flex flex-col lg:flex-row gap-6">
         {/* Interactive Map Column */}
-        <div className="relative z-0 h-[50dvh] min-h-[350px] lg:sticky lg:top-20 lg:h-[calc(100vh-8rem)] lg:w-1/2 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-lg group">
+        <div className="relative z-0 h-[52dvh] min-h-[380px] lg:sticky lg:top-20 lg:h-[calc(100vh-8rem)] lg:w-1/2 rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-xl group">
           
-          {/* Floating Map Search Overlay */}
-          <div className="absolute top-3 left-3 z-[600] w-64 sm:w-72">
-            <div className="relative flex items-center bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg px-3 py-2">
+          {/* Floating Map Search Bar */}
+          <div className="absolute top-3 left-3 z-[600] w-60 sm:w-72">
+            <div className="relative flex items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl px-3.5 py-2">
               <Search size={14} className="text-primary shrink-0 mr-2" />
               <input
                 type="text"
@@ -266,7 +290,7 @@ export default function CreateTripScreen() {
                   }
                 }}
                 placeholder="Search map location..."
-                className="w-full bg-transparent text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none"
+                className="w-full bg-transparent text-xs font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none"
               />
               {mapSearchQuery && (
                 <button
@@ -283,14 +307,14 @@ export default function CreateTripScreen() {
 
             {/* Map Search Dropdown */}
             {mapSearchOpen && mapSearchResults.length > 0 && (
-              <div className="mt-1.5 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="mt-2 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
                 {mapSearchResults.map((dest) => {
                   const isSel = selectedDests.some((s) => (s._id || s.id) === (dest._id || dest.id));
                   return (
                     <button
                       key={dest._id || dest.id}
                       onClick={() => selectFromMapSearch(dest)}
-                      className="w-full px-3 py-2.5 text-left flex items-center justify-between hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
+                      className="w-full px-3.5 py-2.5 text-left flex items-center justify-between hover:bg-primary/10 transition-colors"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <MapPin size={13} className={isSel ? 'text-primary' : 'text-slate-400'} />
@@ -299,7 +323,7 @@ export default function CreateTripScreen() {
                           <p className="text-[10px] text-slate-500 truncate">{dest.country}</p>
                         </div>
                       </div>
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isSel ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
+                      <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${isSel ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
                         {isSel ? 'Added' : 'Fly to'}
                       </span>
                     </button>
@@ -310,11 +334,11 @@ export default function CreateTripScreen() {
           </div>
 
           {/* Map Controls Floating Bar */}
-          <div className="absolute top-3 right-3 z-[600] flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md">
+          <div className="absolute top-3 right-3 z-[600] flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl">
             <button
               onClick={() => setActiveLayerKey((k) => (k === 'voyager' ? 'osm' : k === 'osm' ? 'topo' : 'voyager'))}
-              title={`Switch Map Layer (Current: ${activeLayer.name})`}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title={`Switch Map Layer (${activeLayer.name})`}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <Layers size={13} className="text-primary" />
               <span className="hidden sm:inline">{activeLayer.name}</span>
@@ -323,12 +347,13 @@ export default function CreateTripScreen() {
               <button
                 onClick={() => setFlyCenter([...routeLine[0]])}
                 title="Focus on first stop"
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 <Compass size={13} className="text-primary" />
                 <span>Center</span>
               </button>
             )}
+            <CustomZoomControls />
           </div>
 
           <MapContainer
@@ -336,7 +361,7 @@ export default function CreateTripScreen() {
             zoom={2}
             className="w-full h-full min-h-[300px]"
             scrollWheelZoom={true}
-            zoomControl={true}
+            zoomControl={false}
             dragging={true}
             touchZoom={true}
             doubleClickZoom={true}
