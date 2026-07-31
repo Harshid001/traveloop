@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
@@ -13,40 +13,60 @@ import { useGetDestinationsQuery, useCreateTripMutation } from '../services/apiS
 import Button from '../components/ui/Button';
 import AppLayout from '../components/layout/AppLayout';
 
-// Custom Marker HTML generator with route sequence numbers & hover animation
-const createCustomMarker = (number, isSelected, title) => {
-  return L.divIcon({
-    className: 'custom-map-pin-container',
-    html: `
-      <div style="
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        background: ${isSelected ? 'linear-gradient(135deg, #4F46E5, #7C3AED)' : '#1E293B'};
-        color: white;
-        font-family: 'Poppins', sans-serif;
-        font-weight: 800;
-        font-size: 13px;
-        border-radius: 50% 50% 50% 4px;
-        transform: rotate(-45deg);
-        border: 2.5px solid white;
-        box-shadow: 0 8px 18px ${isSelected ? 'rgba(79, 70, 229, 0.45)' : 'rgba(0,0,0,0.3)'};
-        cursor: pointer;
-        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-      ">
-        <span style="transform: rotate(45deg); display: flex; align-items: center; justify-content: center;">
-          ${isSelected ? (number || '✓') : '📍'}
-        </span>
-      </div>
-    `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -36],
-  });
-};
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+const selectedIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const defaultIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+class MapErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('MapErrorBoundary caught error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full h-full min-h-[350px] flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-3xl p-6 text-center border border-slate-200 dark:border-slate-800">
+          <p className="font-poppins font-bold text-sm text-slate-800 dark:text-slate-200 mb-1">Interactive Map Preview</p>
+          <p className="text-xs text-slate-500 mb-4 max-w-xs">Map tiles re-initializing. Select your destinations using the list on the right.</p>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            className="px-4 py-2 text-xs font-bold text-white bg-primary rounded-xl shadow-md hover:bg-primary-dark transition-colors"
+          >
+            Reload Map View
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const mapLayers = {
   voyager: {
@@ -473,86 +493,87 @@ export default function CreateTripScreen() {
             )}
           </div>
 
-          <MapContainer
-            center={[20, 20]}
-            zoom={2}
-            className="w-full h-full min-h-[300px]"
-            scrollWheelZoom={true}
-            zoomControl={false}
-            dragging={true}
-            touchZoom={true}
-            doubleClickZoom={true}
-          >
-            <TileLayer
-              key={activeLayerKey}
-              attribution={activeLayer.attr}
-              url={activeLayer.url}
-              maxZoom={19}
-            />
-            <MapControlsBar
-              activeLayer={activeLayer}
-              setActiveLayerKey={setActiveLayerKey}
-              routeLine={routeLine}
-              setFlyCenter={setFlyCenter}
-            />
-            <MapResizeHelper />
-            <AutoFitBounds points={routeLine} />
-            <MapClickHandler destinations={destinations} onSelectNearest={toggleDest} />
-            <FlyTo center={flyCenter} />
-
-            {destinations.map((d) => {
-              const lat = parseFloat(d.lat);
-              const lng = parseFloat(d.lng);
-              if (isNaN(lat) || isNaN(lng)) return null;
-
-              const dId = d._id || d.id;
-              const selectedIdx = selectedDests.findIndex((s) => (s._id || s.id) === dId);
-              const isSelected = selectedIdx !== -1;
-              const markerNum = isSelected ? selectedIdx + 1 : null;
-
-              return (
-                <Marker
-                  key={dId}
-                  position={[lat, lng]}
-                  icon={createCustomMarker(markerNum, isSelected, d.name)}
-                  eventHandlers={{ click: () => toggleDest(d) }}
-                >
-                  <Popup>
-                    <div className="text-center min-w-[150px] p-1">
-                      {d.image && <img src={d.image} alt={d.name} className="w-full h-20 object-cover rounded-lg mb-2 shadow-sm" />}
-                      <p className="font-poppins font-bold text-sm text-slate-900">{d.name}</p>
-                      <p className="text-xs text-slate-500 font-medium">{d.country}</p>
-                      <p className="text-xs font-extrabold text-primary mt-1.5">${(d.budgetEstimate || d.budget || 0).toLocaleString()} est.</p>
-                      <button
-                        onClick={() => toggleDest(d)}
-                        className={`mt-2 w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${
-                          isSelected
-                            ? 'bg-rose-500 text-white hover:bg-rose-600'
-                            : 'bg-primary text-white hover:bg-primary-dark'
-                        }`}
-                      >
-                        {isSelected ? 'Remove from Route' : 'Add to Route'}
-                      </button>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-
-            {routeLine.length > 1 && (
-              <Polyline
-                positions={routeLine}
-                pathOptions={{
-                  color: '#4F46E5',
-                  weight: 4,
-                  dashArray: '10, 10',
-                  opacity: 0.85,
-                  lineCap: 'round',
-                  lineJoin: 'round',
-                }}
+          <MapErrorBoundary>
+            <MapContainer
+              center={[20, 20]}
+              zoom={2}
+              className="w-full h-full min-h-[300px]"
+              scrollWheelZoom={true}
+              zoomControl={false}
+              dragging={true}
+              touchZoom={true}
+              doubleClickZoom={true}
+            >
+              <TileLayer
+                key={activeLayerKey}
+                attribution={activeLayer.attr}
+                url={activeLayer.url}
+                maxZoom={19}
               />
-            )}
-          </MapContainer>
+              <MapControlsBar
+                activeLayer={activeLayer}
+                setActiveLayerKey={setActiveLayerKey}
+                routeLine={routeLine}
+                setFlyCenter={setFlyCenter}
+              />
+              <MapResizeHelper />
+              <AutoFitBounds points={routeLine} />
+              <MapClickHandler destinations={destinations} onSelectNearest={toggleDest} />
+              <FlyTo center={flyCenter} />
+
+              {destinations.map((d) => {
+                const lat = parseFloat(d.lat);
+                const lng = parseFloat(d.lng);
+                if (isNaN(lat) || isNaN(lng)) return null;
+
+                const dId = d._id || d.id;
+                const selectedIdx = selectedDests.findIndex((s) => (s._id || s.id) === dId);
+                const isSelected = selectedIdx !== -1;
+
+                return (
+                  <Marker
+                    key={dId}
+                    position={[lat, lng]}
+                    icon={isSelected ? selectedIcon : defaultIcon}
+                    eventHandlers={{ click: () => toggleDest(d) }}
+                  >
+                    <Popup>
+                      <div className="text-center min-w-[150px] p-1">
+                        {d.image && <img src={d.image} alt={d.name} className="w-full h-20 object-cover rounded-lg mb-2 shadow-sm" />}
+                        <p className="font-poppins font-bold text-sm text-slate-900">{d.name}</p>
+                        <p className="text-xs text-slate-500 font-medium">{d.country}</p>
+                        <p className="text-xs font-extrabold text-primary mt-1.5">${(d.budgetEstimate || d.budget || 0).toLocaleString()} est.</p>
+                        <button
+                          onClick={() => toggleDest(d)}
+                          className={`mt-2 w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                            isSelected
+                              ? 'bg-rose-500 text-white hover:bg-rose-600'
+                              : 'bg-primary text-white hover:bg-primary-dark'
+                          }`}
+                        >
+                          {isSelected ? 'Remove from Route' : 'Add to Route'}
+                        </button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+
+              {routeLine.length > 1 && (
+                <Polyline
+                  positions={routeLine}
+                  pathOptions={{
+                    color: '#4F46E5',
+                    weight: 4,
+                    dashArray: '10, 10',
+                    opacity: 0.85,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                  }}
+                />
+              )}
+            </MapContainer>
+          </MapErrorBoundary>
 
           {selectedDests.length > 0 && (
             <div className="absolute bottom-4 left-4 right-4 z-[500] rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 px-4 py-3 shadow-lg backdrop-blur-md flex items-center justify-between">
