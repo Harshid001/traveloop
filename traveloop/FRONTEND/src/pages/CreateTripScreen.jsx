@@ -83,10 +83,17 @@ function MapResizeHelper() {
 function AutoFitBounds({ points }) {
   const map = useMap();
   useEffect(() => {
-    if (points && points.length > 0) {
-      const bounds = L.latLngBounds(points);
-      if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13, animate: true, duration: 1 });
+    if (points && points.length > 1) {
+      const validPoints = points.filter(([lat, lng]) => !isNaN(lat) && !isNaN(lng));
+      if (validPoints.length > 1) {
+        try {
+          const bounds = L.latLngBounds(validPoints);
+          if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12, animate: true });
+          }
+        } catch (e) {
+          console.warn('AutoFitBounds error:', e);
+        }
       }
     }
   }, [points, map]);
@@ -100,9 +107,11 @@ function MapClickHandler({ destinations, onSelectNearest }) {
       let closest = null;
       let minDistance = Infinity;
       destinations.forEach((d) => {
-        if (d.lat && d.lng) {
-          const dist = Math.hypot(d.lat - lat, d.lng - lng);
-          if (dist < minDistance && dist < 1.5) { // Within reasonable threshold
+        const dLat = parseFloat(d.lat);
+        const dLng = parseFloat(d.lng);
+        if (!isNaN(dLat) && !isNaN(dLng)) {
+          const dist = Math.hypot(dLat - lat, dLng - lng);
+          if (dist < minDistance && dist < 1.5) {
             minDistance = dist;
             closest = d;
           }
@@ -116,7 +125,19 @@ function MapClickHandler({ destinations, onSelectNearest }) {
 
 function FlyTo({ center }) {
   const map = useMap();
-  useEffect(() => { if (center) map.flyTo(center, 7, { duration: 1.2 }); }, [center, map]);
+  useEffect(() => {
+    if (center && Array.isArray(center) && center.length === 2) {
+      const lat = parseFloat(center[0]);
+      const lng = parseFloat(center[1]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        try {
+          map.flyTo([lat, lng], 8, { duration: 1.2 });
+        } catch (e) {
+          console.warn('FlyTo error:', e);
+        }
+      }
+    }
+  }, [center, map]);
   return null;
 }
 
@@ -261,7 +282,10 @@ export default function CreateTripScreen() {
   }, [selectedDests, destinations]);
 
   const routeLine = useMemo(
-    () => selectedDests.filter((d) => d.lat && d.lng).map((d) => [d.lat, d.lng]),
+    () =>
+      selectedDests
+        .map((d) => [parseFloat(d.lat), parseFloat(d.lng)])
+        .filter(([lat, lng]) => !isNaN(lat) && !isNaN(lng)),
     [selectedDests],
   );
 
@@ -476,7 +500,11 @@ export default function CreateTripScreen() {
             <MapClickHandler destinations={destinations} onSelectNearest={toggleDest} />
             <FlyTo center={flyCenter} />
 
-            {destinations.filter((d) => d.lat && d.lng).map((d) => {
+            {destinations.map((d) => {
+              const lat = parseFloat(d.lat);
+              const lng = parseFloat(d.lng);
+              if (isNaN(lat) || isNaN(lng)) return null;
+
               const dId = d._id || d.id;
               const selectedIdx = selectedDests.findIndex((s) => (s._id || s.id) === dId);
               const isSelected = selectedIdx !== -1;
@@ -485,7 +513,7 @@ export default function CreateTripScreen() {
               return (
                 <Marker
                   key={dId}
-                  position={[d.lat, d.lng]}
+                  position={[lat, lng]}
                   icon={createCustomMarker(markerNum, isSelected, d.name)}
                   eventHandlers={{ click: () => toggleDest(d) }}
                 >
