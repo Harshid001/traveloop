@@ -120,26 +120,48 @@ function FlyTo({ center }) {
   return null;
 }
 
-function CustomZoomControls() {
+function MapControlsBar({ activeLayer, setActiveLayerKey, routeLine, setFlyCenter }) {
   const map = useMap();
   return (
-    <div className="flex items-center border-l border-slate-200 dark:border-slate-800 pl-1.5 ml-1">
+    <div className="absolute top-3 right-3 z-[600] flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl">
       <button
         type="button"
-        onClick={() => map.zoomIn()}
-        className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-        title="Zoom in"
+        onClick={() => setActiveLayerKey((k) => (k === 'voyager' ? 'osm' : k === 'osm' ? 'topo' : 'voyager'))}
+        title={`Switch Map Layer (${activeLayer.name})`}
+        className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
       >
-        +
+        <Layers size={13} className="text-primary" />
+        <span className="hidden sm:inline">{activeLayer.name}</span>
       </button>
-      <button
-        type="button"
-        onClick={() => map.zoomOut()}
-        className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-        title="Zoom out"
-      >
-        −
-      </button>
+      {routeLine.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setFlyCenter([...routeLine[0]])}
+          title="Focus on first stop"
+          className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <Compass size={13} className="text-primary" />
+          <span>Center</span>
+        </button>
+      )}
+      <div className="flex items-center border-l border-slate-200 dark:border-slate-800 pl-1.5 ml-1">
+        <button
+          type="button"
+          onClick={() => map.zoomIn()}
+          className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          title="Zoom in"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          onClick={() => map.zoomOut()}
+          className="w-7 h-7 flex items-center justify-center font-bold text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          title="Zoom out"
+        >
+          −
+        </button>
+      </div>
     </div>
   );
 }
@@ -333,29 +355,6 @@ export default function CreateTripScreen() {
             )}
           </div>
 
-          {/* Map Controls Floating Bar */}
-          <div className="absolute top-3 right-3 z-[600] flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl">
-            <button
-              onClick={() => setActiveLayerKey((k) => (k === 'voyager' ? 'osm' : k === 'osm' ? 'topo' : 'voyager'))}
-              title={`Switch Map Layer (${activeLayer.name})`}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <Layers size={13} className="text-primary" />
-              <span className="hidden sm:inline">{activeLayer.name}</span>
-            </button>
-            {routeLine.length > 0 && (
-              <button
-                onClick={() => setFlyCenter([...routeLine[0]])}
-                title="Focus on first stop"
-                className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                <Compass size={13} className="text-primary" />
-                <span>Center</span>
-              </button>
-            )}
-            <CustomZoomControls />
-          </div>
-
           <MapContainer
             center={[20, 20]}
             zoom={2}
@@ -371,6 +370,12 @@ export default function CreateTripScreen() {
               attribution={activeLayer.attr}
               url={activeLayer.url}
               maxZoom={19}
+            />
+            <MapControlsBar
+              activeLayer={activeLayer}
+              setActiveLayerKey={setActiveLayerKey}
+              routeLine={routeLine}
+              setFlyCenter={setFlyCenter}
             />
             <MapResizeHelper />
             <AutoFitBounds points={routeLine} />
