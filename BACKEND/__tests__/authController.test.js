@@ -1,17 +1,15 @@
+const jwt = require('jsonwebtoken');
 const User = require('../src/models/User');
+const emailService = require('../src/services/emailService');
 
+jest.mock('jsonwebtoken');
 jest.mock('../src/models/User');
-jest.mock('../src/utils/generateToken', () => jest.fn(() => 'mock-token-123'));
 jest.mock('../src/utils/setTokenCookie', () => ({
   setTokenCookie: jest.fn(),
   clearTokenCookie: jest.fn(),
 }));
-jest.mock('../src/services/emailService', () => ({
-  sendEmail: jest.fn().mockResolvedValue({ success: true }),
-}));
 
 const { registerUser, loginUser } = require('../src/controllers/authController');
-const generateToken = require('../src/utils/generateToken');
 
 const mockRes = () => {
   const res = {};
@@ -24,6 +22,8 @@ const mockRes = () => {
 describe('Auth Controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jwt.sign.mockReturnValue('mock-token-123');
+    jest.spyOn(emailService, 'sendEmail').mockResolvedValue({ success: true });
   });
 
   test('registerUser creates user and returns token', async () => {
@@ -45,7 +45,7 @@ describe('Auth Controller', () => {
     await registerUser(req, res);
 
     expect(User.create).toHaveBeenCalledWith(expect.objectContaining({ email: 'test@test.com' }));
-    expect(generateToken).toHaveBeenCalledWith('user1');
+    expect(jwt.sign).toHaveBeenCalledWith(expect.objectContaining({ id: 'user1' }), expect.any(String), expect.any(Object));
     expect(res.status).toHaveBeenCalledWith(201);
   });
 
@@ -110,7 +110,7 @@ describe('Auth Controller', () => {
 
     await loginUser(req, res);
 
-    expect(generateToken).toHaveBeenCalledWith('user1');
+    expect(jwt.sign).toHaveBeenCalledWith(expect.objectContaining({ id: 'user1' }), expect.any(String), expect.any(Object));
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });

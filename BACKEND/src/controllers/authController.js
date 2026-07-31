@@ -3,6 +3,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const generateToken = require('../utils/generateToken');
 const { setTokenCookie, clearTokenCookie } = require('../utils/setTokenCookie');
+const emailService = require('../services/emailService');
 
 // @desc    Register a new user
 // @route   POST /api/auth/signup
@@ -32,7 +33,7 @@ const registerUser = asyncHandler(async (req, res) => {
     const verificationToken = user.generateEmailVerificationToken();
     await user.save({ validateBeforeSave: false });
     const verificationUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`;
-    await require('../services/emailService').sendEmail({
+    await emailService.sendEmail({
       to: user.email,
       subject: 'Verify your email address',
       text: `Please verify your email by clicking the link: ${verificationUrl}`,
