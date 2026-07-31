@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   ArrowLeft, Trash2, Calendar, Check,
   ChevronUp, ChevronDown, Search, Star, Hotel, Utensils, Car, Ticket,
@@ -30,6 +31,17 @@ const defaultIcon = new L.Icon({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
   iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
 });
+
+function MapResizeHelper() {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+}
 
 function FlyTo({ center }) {
   const map = useMap();
@@ -136,12 +148,13 @@ export default function CreateTripScreen() {
 
       <div className="w-full flex flex-col lg:flex-row gap-6">
         <div className="relative z-0 h-[45dvh] min-h-[320px] lg:sticky lg:top-20 lg:h-[calc(100vh-8rem)] lg:w-1/2 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-md">
-          <MapContainer center={[25, 40]} zoom={2} className="w-full h-full"
-            scrollWheelZoom={false} zoomControl={false} dragging touchZoom doubleClickZoom>
+          <MapContainer center={[20, 20]} zoom={2} className="w-full h-full min-h-[300px]"
+            scrollWheelZoom={true} zoomControl={true} dragging touchZoom doubleClickZoom>
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org">OSM</a>'
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <MapResizeHelper />
             <FlyTo center={flyCenter} />
 
             {destinations.filter((d) => d.lat && d.lng).map((d) => {
