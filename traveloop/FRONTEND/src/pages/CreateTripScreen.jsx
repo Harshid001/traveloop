@@ -231,6 +231,14 @@ export default function CreateTripScreen() {
     return [...initialDestinations, ...customPlaces];
   }, [initialDestinations, customPlaces]);
 
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return destinations;
+    const q = searchQuery.toLowerCase();
+    return destinations.filter((d) =>
+      d.name.toLowerCase().includes(q) || (d.country || '').toLowerCase().includes(q)
+    );
+  }, [searchQuery, destinations]);
+
   const activeLayer = mapLayers[activeLayerKey];
 
   useEffect(() => {
