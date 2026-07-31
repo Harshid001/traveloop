@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  Plus, Map, Compass, Bookmark,
-  Globe, DollarSign, Plane, Route, ClipboardList,
-  StickyNote, Sparkles
-} from 'lucide-react';
+import { Bookmark, Globe, DollarSign, Plane } from 'lucide-react';
 import { useGetTopTripsQuery, useGetLatestTripsQuery } from '../services/apiSlice';
 import AppLayout from '../components/layout/AppLayout';
 import { useAuth } from '../context/AuthContext';
@@ -79,17 +75,6 @@ export default function HomePage() {
     { label: 'Budget Spent', value: budgetSpent, icon: DollarSign, color: '#22C55E', suffix: '', prefix: '$', badge: '82% on track' },
     { label: 'Distance Travelled', value: distanceTravelled, icon: Globe, color: '#06B6D4', suffix: ' km', format: true, badge: '12 countries' },
     { label: 'Saved Destinations', value: 8, icon: Bookmark, color: '#7C3AED', suffix: '', badge: '4 wishlist' },
-  ];
-
-  const quickNav = [
-    { label: 'Create Trip', icon: Plus, route: '/create-trip', color: 'from-indigo-600 to-purple-600', badge: 'New' },
-    { label: 'My Trips', icon: Map, route: '/my-trips', color: 'from-purple-600 to-indigo-600', count: '3' },
-    { label: 'Itinerary', icon: Route, route: '/itinerary-builder', color: 'from-indigo-600 to-cyan-600', badge: 'AI' },
-    { label: 'Budget', icon: DollarSign, route: '/budget', color: 'from-emerald-500 to-teal-600' },
-    { label: 'Explore', icon: Compass, route: '/explore', color: 'from-amber-500 to-orange-600' },
-    { label: 'Packing', icon: ClipboardList, route: '/packing', color: 'from-rose-500 to-pink-600' },
-    { label: 'Journal', icon: StickyNote, route: '/journal', color: 'from-cyan-500 to-blue-600' },
-    { label: 'Saved', icon: Bookmark, route: '/saved', color: 'from-purple-500 to-indigo-600' },
   ];
 
   return (
@@ -167,7 +152,7 @@ export default function HomePage() {
                 <span>Upcoming Adventure</span>
                 <span className="bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-400/30">Confirmed</span>
               </div>
-              <h3 className="font-poppins text-lg font-bold text-white leading-snug">Tokyo & Mt. Fuji Exploration</h3>
+              <h3 className="font-poppins text-lg font-bold text-white leading-snug">Tokyo &amp; Mt. Fuji Exploration</h3>
               <p className="text-xs text-slate-300 mt-1">Jun 15 — Jun 28, 2026 (14 Days)</p>
 
               <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
@@ -179,47 +164,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </section>
-
-        {/* Spacious Quick Navigation Cards */}
-        <section className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Quick Actions</h2>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">All tools at your fingertips</span>
-          </div>
-          <motion.div
-            initial="hidden" animate="visible"
-            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.04 } } }}
-            className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4"
-          >
-            {quickNav.map((item) => (
-              <motion.button
-                key={item.label}
-                variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
-                whileHover={{ y: -4, scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => navigate(item.route)}
-                className="relative flex flex-col items-center justify-center text-center rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 p-4 shadow-soft transition-all duration-200 hover:shadow-hover hover:border-primary/40 dark:hover:border-primary/50 group cursor-pointer"
-              >
-                {item.badge && (
-                  <span className="absolute top-2 right-2 text-[9px] font-extrabold bg-primary text-white px-1.5 py-0.5 rounded-full shadow-2xs">
-                    {item.badge}
-                  </span>
-                )}
-                {item.count && (
-                  <span className="absolute top-2 right-2 text-[9px] font-extrabold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded-full">
-                    {item.count}
-                  </span>
-                )}
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${item.color} flex shrink-0 items-center justify-center text-white transition-transform duration-300 group-hover:scale-110 shadow-md mb-2.5`}>
-                  <item.icon size={22} />
-                </div>
-                <span className="font-poppins text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary dark:group-hover:text-primary-light transition-colors whitespace-nowrap">
-                  {item.label}
-                </span>
-              </motion.button>
-            ))}
-          </motion.div>
         </section>
 
         {/* Dashboard 4-Metric Overview */}
