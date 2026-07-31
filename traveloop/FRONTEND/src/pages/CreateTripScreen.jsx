@@ -1,51 +1,122 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   ArrowLeft, Trash2, Calendar, Check,
   ChevronUp, ChevronDown, Search, Star, Hotel, Utensils, Car, Ticket,
-  Save, GripVertical, MapPin
+  Save, GripVertical, MapPin, Maximize2, Layers, Compass
 } from 'lucide-react';
 import { useGetDestinationsQuery, useCreateTripMutation } from '../services/apiSlice';
 import Button from '../components/ui/Button';
 import AppLayout from '../components/layout/AppLayout';
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
+// Custom Marker HTML generator with route sequence numbers & hover animation
+const createCustomMarker = (number, isSelected, title) => {
+  return L.divIcon({
+    className: 'custom-map-pin-container',
+    html: `
+      <div style="
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: ${isSelected ? 'linear-gradient(135deg, #4F46E5, #7C3AED)' : '#1E293B'};
+        color: white;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 800;
+        font-size: 13px;
+        border-radius: 50% 50% 50% 4px;
+        transform: rotate(-45deg);
+        border: 2.5px solid white;
+        box-shadow: 0 8px 18px ${isSelected ? 'rgba(79, 70, 229, 0.45)' : 'rgba(0,0,0,0.3)'};
+        cursor: pointer;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      ">
+        <span style="transform: rotate(45deg); display: flex; align-items: center; justify-content: center;">
+          ${isSelected ? (number || '✓') : '📍'}
+        </span>
+      </div>
+    `,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
+  });
+};
 
-const selectedIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
-});
-
-const defaultIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
-});
+const mapLayers = {
+  voyager: {
+    name: 'Carto Voyager HD',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attr: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  },
+  osm: {
+    name: 'OpenStreetMap',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attr: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  },
+  topo: {
+    name: 'Topographic',
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    attr: '&copy; OpenTopoMap &copy; OpenStreetMap',
+  },
+};
 
 function MapResizeHelper() {
   const map = useMap();
   useEffect(() => {
-    const timer = setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
-    return () => clearTimeout(timer);
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    const timer = setTimeout(() => map.invalidateSize(), 250);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
   }, [map]);
+  return null;
+}
+
+function AutoFitBounds({ points }) {
+  const map = useMap();
+  useEffect(() => {
+    if (points && points.length > 0) {
+      const bounds = L.latLngBounds(points);
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13, animate: true, duration: 1 });
+      }
+    }
+  }, [points, map]);
+  return null;
+}
+
+function MapClickHandler({ destinations, onSelectNearest }) {
+  useMapEvents({
+    click(e) {
+      const { lat, lng } = e.latlng;
+      let closest = null;
+      let minDistance = Infinity;
+      destinations.forEach((d) => {
+        if (d.lat && d.lng) {
+          const dist = Math.hypot(d.lat - lat, d.lng - lng);
+          if (dist < minDistance && dist < 1.5) { // Within reasonable threshold
+            minDistance = dist;
+            closest = d;
+          }
+        }
+      });
+      if (closest) onSelectNearest(closest);
+    },
+  });
   return null;
 }
 
 function FlyTo({ center }) {
   const map = useMap();
-  useEffect(() => { if (center) map.flyTo(center, 5, { duration: 1.2 }); }, [center, map]);
+  useEffect(() => { if (center) map.flyTo(center, 7, { duration: 1.2 }); }, [center, map]);
   return null;
 }
 
@@ -59,6 +130,7 @@ export default function CreateTripScreen() {
   const [flyCenter, setFlyCenter] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [activeLayerKey, setActiveLayerKey] = useState('voyager');
 
   const { data: destinations = [], isLoading: destsLoading } = useGetDestinationsQuery();
   const [createTrip] = useCreateTripMutation();
@@ -69,14 +141,14 @@ export default function CreateTripScreen() {
         (d.country || '').toLowerCase().includes(searchQuery.toLowerCase()))
     : destinations;
 
-  const toggleDest = (dest) => {
+  const toggleDest = useCallback((dest) => {
     setSelectedDests((prev) => {
-      const exists = prev.find((d) => d.id === dest.id || d._id === dest._id);
-      if (exists) return prev.filter((d) => d.id !== dest.id && d._id !== dest._id);
+      const exists = prev.find((d) => (d.id || d._id) === (dest.id || dest._id));
+      if (exists) return prev.filter((d) => (d.id || d._id) !== (dest.id || dest._id));
       return [...prev, dest];
     });
     if (dest.lat && dest.lng) setFlyCenter([dest.lat, dest.lng]);
-  };
+  }, []);
 
   const moveDest = (idx, dir) => {
     setSelectedDests((prev) => {
@@ -88,7 +160,7 @@ export default function CreateTripScreen() {
     });
   };
 
-  const removeDest = (id) => setSelectedDests((prev) => prev.filter((d) => d.id !== id && d._id !== id));
+  const removeDest = (id) => setSelectedDests((prev) => prev.filter((d) => (d.id || d._id) !== id));
 
   const budget = useMemo(() => {
     let hotel = 0, transport = 0, food = 0, activity = 0;
@@ -97,7 +169,7 @@ export default function CreateTripScreen() {
       hotel += Math.round(est * 0.4);
       transport += Math.round(est * 0.25);
       food += Math.round(est * 0.2);
-      const destData = destinations.find((dd) => dd.id === d.id || dd._id === d._id);
+      const destData = destinations.find((dd) => (dd.id || dd._id) === (d.id || d._id));
       destData?.activities?.forEach((act) => {
         activity += act.cost || 0;
       });
@@ -105,9 +177,10 @@ export default function CreateTripScreen() {
     return { hotel, transport, food, activity, total: hotel + transport + food + activity };
   }, [selectedDests, destinations]);
 
-  const routeLine = selectedDests
-    .filter((d) => d.lat && d.lng)
-    .map((d) => [d.lat, d.lng]);
+  const routeLine = useMemo(
+    () => selectedDests.filter((d) => d.lat && d.lng).map((d) => [d.lat, d.lng]),
+    [selectedDests],
+  );
 
   const handleSave = async () => {
     if (selectedDests.length === 0) return;
@@ -130,14 +203,16 @@ export default function CreateTripScreen() {
     }
   };
 
+  const activeLayer = mapLayers[activeLayerKey];
+
   return (
     <AppLayout>
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center gap-3">
           <button aria-label="Back to home" onClick={() => navigate('/home')} className="tap-target rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"><ArrowLeft size={18} /></button>
           <div>
-            <h1 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Create Trip Itinerary</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{selectedDests.length} destinations selected for your custom route</p>
+            <h1 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Create Interactive Trip Itinerary</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{selectedDests.length} destinations selected · Interactive live map</p>
           </div>
         </div>
         <Button variant="primary" onClick={handleSave} className="text-xs px-5 py-2.5 shadow-md" disabled={saving || saved || selectedDests.length === 0}>
@@ -147,28 +222,81 @@ export default function CreateTripScreen() {
       </div>
 
       <div className="w-full flex flex-col lg:flex-row gap-6">
-        <div className="relative z-0 h-[45dvh] min-h-[320px] lg:sticky lg:top-20 lg:h-[calc(100vh-8rem)] lg:w-1/2 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-md">
-          <MapContainer center={[20, 20]} zoom={2} className="w-full h-full min-h-[300px]"
-            scrollWheelZoom={true} zoomControl={true} dragging touchZoom doubleClickZoom>
+        {/* Interactive Map Column */}
+        <div className="relative z-0 h-[50dvh] min-h-[350px] lg:sticky lg:top-20 lg:h-[calc(100vh-8rem)] lg:w-1/2 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 shadow-lg group">
+          
+          {/* Map Controls Floating Bar */}
+          <div className="absolute top-3 right-3 z-[600] flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-md">
+            <button
+              onClick={() => setActiveLayerKey((k) => (k === 'voyager' ? 'osm' : k === 'osm' ? 'topo' : 'voyager'))}
+              title={`Switch Map Layer (Current: ${activeLayer.name})`}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <Layers size={13} className="text-primary" />
+              <span>{activeLayer.name}</span>
+            </button>
+            {routeLine.length > 0 && (
+              <button
+                onClick={() => setFlyCenter([...routeLine[0]])}
+                title="Focus on first stop"
+                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <Compass size={13} className="text-primary" />
+                <span>Center</span>
+              </button>
+            )}
+          </div>
+
+          <MapContainer
+            center={[20, 20]}
+            zoom={2}
+            className="w-full h-full min-h-[300px]"
+            scrollWheelZoom={true}
+            zoomControl={true}
+            dragging={true}
+            touchZoom={true}
+            doubleClickZoom={true}
+          >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              key={activeLayerKey}
+              attribution={activeLayer.attr}
+              url={activeLayer.url}
+              maxZoom={19}
             />
             <MapResizeHelper />
+            <AutoFitBounds points={routeLine} />
+            <MapClickHandler destinations={destinations} onSelectNearest={toggleDest} />
             <FlyTo center={flyCenter} />
 
             {destinations.filter((d) => d.lat && d.lng).map((d) => {
               const dId = d._id || d.id;
-              const isSelected = selectedDests.some((s) => (s._id || s.id) === dId);
+              const selectedIdx = selectedDests.findIndex((s) => (s._id || s.id) === dId);
+              const isSelected = selectedIdx !== -1;
+              const markerNum = isSelected ? selectedIdx + 1 : null;
+
               return (
-                <Marker key={dId} position={[d.lat, d.lng]} icon={isSelected ? selectedIcon : defaultIcon}
-                  eventHandlers={{ click: () => toggleDest(d) }}>
+                <Marker
+                  key={dId}
+                  position={[d.lat, d.lng]}
+                  icon={createCustomMarker(markerNum, isSelected, d.name)}
+                  eventHandlers={{ click: () => toggleDest(d) }}
+                >
                   <Popup>
-                    <div className="text-center min-w-[140px]">
-                      {d.image && <img src={d.image} alt={d.name} className="w-full h-20 object-cover rounded-lg mb-2" />}
-                      <p className="font-semibold text-sm">{d.name}</p>
-                      <p className="text-xs text-slate-500">{d.country}</p>
-                      <p className="text-xs font-bold text-primary mt-1">${(d.budgetEstimate || d.budget || 0).toLocaleString()}</p>
+                    <div className="text-center min-w-[150px] p-1">
+                      {d.image && <img src={d.image} alt={d.name} className="w-full h-20 object-cover rounded-lg mb-2 shadow-sm" />}
+                      <p className="font-poppins font-bold text-sm text-slate-900">{d.name}</p>
+                      <p className="text-xs text-slate-500 font-medium">{d.country}</p>
+                      <p className="text-xs font-extrabold text-primary mt-1.5">${(d.budgetEstimate || d.budget || 0).toLocaleString()} est.</p>
+                      <button
+                        onClick={() => toggleDest(d)}
+                        className={`mt-2 w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                          isSelected
+                            ? 'bg-rose-500 text-white hover:bg-rose-600'
+                            : 'bg-primary text-white hover:bg-primary-dark'
+                        }`}
+                      >
+                        {isSelected ? 'Remove from Route' : 'Add to Route'}
+                      </button>
                     </div>
                   </Popup>
                 </Marker>
@@ -176,13 +304,29 @@ export default function CreateTripScreen() {
             })}
 
             {routeLine.length > 1 && (
-              <Polyline positions={routeLine} pathOptions={{ color: '#4F46E5', weight: 3.5, dashArray: '8, 8', opacity: 0.8 }} />
+              <Polyline
+                positions={routeLine}
+                pathOptions={{
+                  color: '#4F46E5',
+                  weight: 4,
+                  dashArray: '10, 10',
+                  opacity: 0.85,
+                  lineCap: 'round',
+                  lineJoin: 'round',
+                }}
+              />
             )}
           </MapContainer>
 
           {selectedDests.length > 0 && (
-            <div className="absolute bottom-4 left-4 right-4 z-[500] rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 px-4 py-2.5 shadow-lg backdrop-blur-md">
-              <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{selectedDests.length} stop{selectedDests.length > 1 ? 's' : ''} · Route {routeLine.length > 1 ? 'connected' : 'pending'}</p>
+            <div className="absolute bottom-4 left-4 right-4 z-[500] rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 px-4 py-3 shadow-lg backdrop-blur-md flex items-center justify-between">
+              <div>
+                <p className="text-xs font-extrabold text-slate-900 dark:text-slate-100">{selectedDests.length} stop{selectedDests.length > 1 ? 's' : ''} on route</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Click any marker or map area to interact</p>
+              </div>
+              <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                ${budget.total.toLocaleString()} total
+              </span>
             </div>
           )}
         </div>
