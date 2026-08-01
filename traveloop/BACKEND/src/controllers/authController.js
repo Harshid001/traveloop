@@ -270,25 +270,49 @@ const verifyEmail = asyncHandler(async (req, res) => {
 const googleLogin = asyncHandler(async (req, res) => {
   const { idToken } = req.body;
   if (!idToken) {
-    return errorResponse(res, 400, 'Google ID token is required');
+    return errorResponse(res, 400, 'Google token is required');
   }
 
   const { OAuth2Client } = require('google-auth-library');
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  let ticket, payload;
+
+  let email, name, googleId;
+
+  // Try verifying as a JWT id_token first (One Tap / auth-code flow)
+  // If that fails, treat it as an OAuth2 access_token (implicit flow)
   try {
-    ticket = await client.verifyIdToken({
+    const ticket = await client.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-    payload = ticket.getPayload();
-  } catch (err) {
-    console.error('Google token verification failed:', err);
-    return errorResponse(res, 401, 'Invalid Google ID token');
+    const payload = ticket.getPayload();
+    email = payload.email;
+    name = payload.name || payload.email;
+    googleId = payload.sub;
+  } catch (_jwtErr) {
+    // Fallback: access_token — fetch user info from Google
+    try {
+      const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
+      const userInfoRes = await fetch(
+        `https://www.googleapis.com/oauth2/v3/userinfo`,
+        { headers: { Authorization: `Bearer ${idToken}` } }
+      );
+      if (!userInfoRes.ok) {
+        return errorResponse(res, 401, 'Invalid Google token');
+      }
+      const info = await userInfoRes.json();
+      email = info.email;
+      name = info.name || info.email;
+      googleId = info.sub;
+    } catch (fetchErr) {
+      console.error('Google userinfo fetch failed:', fetchErr);
+      return errorResponse(res, 401, 'Could not verify Google token');
+    }
   }
 
-  const email = payload.email;
-  const name = payload.name || payload.email;
+  if (!email) {
+    return errorResponse(res, 401, 'Could not retrieve email from Google');
+  }
 
   let user = await User.findOne({ email });
   if (!user) {
@@ -296,7 +320,7 @@ const googleLogin = asyncHandler(async (req, res) => {
     user = await User.create({
       name,
       email,
-      password: `google-${Date.now()}`,
+      password: `google-${googleId || Date.now()}`,
       emailVerified: true,
       profileComplete: true,
     });
