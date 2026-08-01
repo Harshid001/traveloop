@@ -47,12 +47,14 @@ export default function LoginScreen() {
       setError('');
       try {
         setLoading(true);
-        // Use the id_token (JWT) that verifyIdToken on the backend expects
-        const idToken = tokenResponse?.credential || tokenResponse?.id_token;
-        if (!idToken) {
-          throw new Error('No ID token received from Google.');
+        // implicit flow returns access_token; auth-code flow returns id_token/credential
+        const token = tokenResponse?.credential
+          || tokenResponse?.id_token
+          || tokenResponse?.access_token;
+        if (!token) {
+          throw new Error('No token received from Google.');
         }
-        const user = await googleLogin(idToken);
+        const user = await googleLogin(token);
         redirectAfterAuth(user);
       } catch (googleError) {
         setError(googleError.message || 'Google login is unavailable.');
@@ -65,7 +67,6 @@ export default function LoginScreen() {
     },
     flow: 'implicit',
     scope: 'openid email profile',
-    ux_mode: 'popup',
   });
 
   return (
