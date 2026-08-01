@@ -7,6 +7,7 @@
 const { cache, CACHE_TTL } = require('./cacheService');
 const amadeusService = require('./amadeusService');
 const unsplashService = require('./unsplashService');
+const { enrichWithImages } = require('./discoverService');
 
 /**
  * Get personalized recommendations based on user behavior signals.
@@ -269,42 +270,6 @@ const parseQueryIntent = (query) => {
   }
 
   return intent;
-};
-
-/**
- * Enrich destinations with images from Unsplash.
- */
-const enrichWithImages = async (destinations) => {
-  if (!destinations || destinations.length === 0) return [];
-
-  try {
-    const enriched = await Promise.all(
-      destinations.map(async (dest) => {
-        if (dest.image && typeof dest.image === 'object' && dest.image.url) return dest;
-
-        try {
-          const images = await unsplashService.getDestinationImages(dest.name || dest.city, 1);
-          const photo = images?.[0];
-          return {
-            ...dest,
-            image: photo
-              ? { url: photo.url?.regular || photo.url, photographer: photo.photographer?.name || '', attribution: photo.attribution || '' }
-              : { url: `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format`, photographer: '', attribution: '' },
-          };
-        } catch (err) {
-          console.error('recommendationService: unsplash fetch failed for', dest.name || dest.city, err.message);
-          return {
-            ...dest,
-            image: { url: `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format`, photographer: '', attribution: '' },
-          };
-        }
-      })
-    );
-    return enriched;
-  } catch (err) {
-    console.error('recommendationService: batch enrichment failed:', err.message);
-    return destinations;
-  }
 };
 
 module.exports = {

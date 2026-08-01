@@ -5,6 +5,9 @@ export default defineConfig({
   plugins: [
     react(),
   ],
+  optimizeDeps: {
+    include: ['maplibre-gl'],
+  },
   server: {
     proxy: {
       '/api': {

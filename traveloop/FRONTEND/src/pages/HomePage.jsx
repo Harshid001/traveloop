@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 import HomeHeader from '../components/features/home/HomeHeader';
 import DashboardStats from '../components/features/home/DashboardStats';
 import TopDestinationsCarousel from '../components/features/home/TopDestinationsCarousel';
-import LatestTripsGrid from '../components/features/home/LatestTripsGrid';
 import useSearch from '../hooks/useSearch';
 import useProfile from '../hooks/useProfile';
 import useLikedTrips from '../hooks/useLikedTrips';
@@ -186,17 +185,6 @@ export default function HomePage() {
           navigate={navigate}
           likedTrips={likedTrips}
           toggleLike={toggleLike}
-        />
-
-        {/* Latest & Category Filtered Trips Grid */}
-        <LatestTripsGrid
-          latestTrips={latestTrips}
-          latestLoading={latestLoading}
-          latestError={latestError}
-          refetchLatest={refetchLatest}
-          likedTrips={likedTrips}
-          toggleLike={toggleLike}
-          navigate={navigate}
         />
       </div>
     </AppLayout>

@@ -10,6 +10,7 @@ const env = {
   MOBILE_URL: process.env.MOBILE_URL || 'http://localhost:19000',
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  AI_MODEL_API_KEY: process.env.AI_MODEL_API_KEY || '',
   AI_PROVIDER: process.env.AI_PROVIDER || 'gemini',
 
   // Third-party API keys

@@ -4,7 +4,7 @@ Traveloop is a full-stack travel planning platform with a responsive React websi
 
 ## Structure
 
-- `FRONTEND/` - React, Vite, React Router, Tailwind CSS, Framer Motion, Lucide, React Leaflet.
+- `FRONTEND/` - React, Vite, React Router, Tailwind CSS, Framer Motion, Lucide, Mapbox GL JS.
 - `MOBILE/` - React Native, Expo, NativeWind, React Navigation, secure token storage abstraction.
 - `BACKEND/` - Node.js, Express, MongoDB, Mongoose, JWT auth, REST APIs, chatbot endpoint.
 

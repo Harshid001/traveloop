@@ -11,7 +11,7 @@ describe('Button', () => {
   it('applies primary variant by default', () => {
     render(<Button>Primary</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('bg-primary');
+    expect(btn.className).toContain('from-primary');
   });
 
   it('renders disabled state', () => {

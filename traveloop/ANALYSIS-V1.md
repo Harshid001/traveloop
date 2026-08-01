@@ -129,7 +129,7 @@ traveloop/
 │   ├── tailwind.config.js         # Tailwind CSS config
 │   ├── postcss.config.js          # PostCSS config
 │   ├── eslint.config.js           # ESLint config
-│   ├── package.json               # Dependencies (React 19, Redux Toolkit, Framer Motion, Leaflet, etc.)
+│   ├── package.json               # Dependencies (React 19, Redux Toolkit, Framer Motion, Mapbox GL JS, etc.)
 │   ├── public/
 │   │   ├── favicon.svg
 │   │   └── icons.svg
@@ -451,7 +451,7 @@ traveloop/
 - **Styling:** Tailwind CSS 3.4.19
 - **Animation:** Framer Motion 12.38.0
 - **Icons:** Lucide React 1.14.0 + React Icons 5.6.0
-- **Maps:** Leaflet + React Leaflet 5.0.0
+- **Maps:** Mapbox GL JS
 - **Forms:** React Hook Form 7.75.0
 - **UI:** Headless UI 2.2.10
 

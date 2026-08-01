@@ -42,17 +42,4 @@ export const authApi = {
   googleLogin: (body) => apiRequest('/auth/google', { method: 'POST', body: JSON.stringify(body) }),
 };
 
-export const tripsApi = {
-  list: (params = {}) => apiRequest(`/trips?${new URLSearchParams(params).toString()}`),
-  create: (body) => apiRequest('/trips', { method: 'POST', body: JSON.stringify(body) }),
-  update: (id, body) => apiRequest(`/trips/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  remove: (id) => apiRequest(`/trips/${id}`, { method: 'DELETE' }),
-};
-
-export const notificationApi = {
-  list: () => apiRequest('/notifications'),
-  markRead: (id) => apiRequest(`/notifications/${id}/read`, { method: 'PATCH' }),
-  clear: () => apiRequest('/notifications/clear', { method: 'DELETE' }),
-};
-
 export { API_BASE_URL };
