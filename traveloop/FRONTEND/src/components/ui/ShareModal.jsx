@@ -1,22 +1,52 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Copy, Check, Share2, ExternalLink } from 'lucide-react';
 
 /**
- * ShareModal — Reusable share popup with social buttons + copy link
+ * ShareModal — Reusable accessible share popup with focus trap + copy link
  * Props: open, onClose, tripTitle, tripUrl
  */
 export default function ShareModal({ open, onClose, tripTitle = 'My Trip', tripUrl = '' }) {
   const [copied, setCopied] = useState(false);
   const [fallbackShareId] = useState(() => Date.now());
+  const modalRef = useRef(null);
   const shareUrl = tripUrl || `https://traveloop.app/trip/shared-${fallbackShareId}`;
   const shareText = `Check out my trip plan: ${tripTitle} — on Traveloop!`;
 
   useEffect(() => {
     if (!open) return undefined;
+    
+    // Focus lock & trap inside modal
+    const focusableElements = modalRef.current?.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements?.[0];
+    const lastElement = focusableElements?.[focusableElements.length - 1];
+
+    if (firstElement) {
+      setTimeout(() => firstElement.focus(), 50);
+    }
+
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (event.key === 'Tab' && focusableElements && focusableElements.length > 0) {
+        if (event.shiftKey) {
+          if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
     };
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
@@ -46,8 +76,9 @@ export default function ShareModal({ open, onClose, tripTitle = 'My Trip', tripU
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose} className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100]" />
 
-          {/* Modal — centered on web */}
+          {/* Modal — centered with responsive screen margin */}
           <motion.div
+            ref={modalRef}
             initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -55,7 +86,7 @@ export default function ShareModal({ open, onClose, tripTitle = 'My Trip', tripU
             role="dialog"
             aria-modal="true"
             aria-labelledby="share-modal-title"
-            className="fixed z-[101] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-2xl"
+            className="fixed z-[101] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-sm overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-700/80">
@@ -73,7 +104,7 @@ export default function ShareModal({ open, onClose, tripTitle = 'My Trip', tripU
             <div className="p-5 space-y-5">
               {/* Trip info */}
               <div className="bg-primary/5 dark:bg-primary/10 rounded-xl p-3.5 text-center border border-primary/10 dark:border-primary/20">
-                <p className="text-[10px] text-textMuted dark:text-slate-400 mb-0.5 uppercase tracking-wider font-semibold">Sharing</p>
+                <p className="text-xs text-textMuted dark:text-slate-400 mb-0.5 uppercase tracking-wider font-semibold">Sharing</p>
                 <p className="font-poppins text-sm font-bold text-slate-900 dark:text-slate-100">{tripTitle}</p>
               </div>
 
@@ -86,7 +117,7 @@ export default function ShareModal({ open, onClose, tripTitle = 'My Trip', tripU
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110" style={{ backgroundColor: s.color + '15' }}>
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill={s.color}>{s.icon}</svg>
                     </div>
-                    <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{s.name}</span>
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{s.name}</span>
                   </a>
                 ))}
               </div>

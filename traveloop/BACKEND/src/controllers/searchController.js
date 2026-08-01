@@ -1,19 +1,40 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { successResponse } = require('../utils/apiResponse');
-const { filterDestinations } = require('./destinationController');
+const amadeusService = require('../services/amadeusService');
+const destinationStore = require('../services/destinationStore');
 const Trip = require('../models/Trip');
 const Journal = require('../models/Journal');
 const SavedPlace = require('../models/SavedPlace');
 
 const globalSearch = asyncHandler(async (req, res) => {
   const text = req.query.q || req.query.search || '';
-  const destinations = filterDestinations({ search: text }).map((item) => ({
-    type: 'destination',
-    id: item.id,
-    title: item.name,
-    subtitle: item.country,
-    image: item.image,
-  }));
+  let destinations = [];
+  try {
+    const dbResults = await destinationStore.search(text);
+    if (dbResults.length) {
+      destinations = dbResults.slice(0, 10).map((item) => {
+        const card = destinationStore.toCard(item);
+        return {
+          type: 'destination',
+          id: card.id,
+          title: card.name,
+          subtitle: card.country,
+          image: card.image?.url || null,
+        };
+      });
+    } else {
+      const results = await amadeusService.searchDestinations(text || '');
+      destinations = results.slice(0, 10).map((item) => ({
+        type: 'destination',
+        id: item.iataCode || item.name,
+        title: item.name,
+        subtitle: item.country,
+        image: null,
+      }));
+    }
+  } catch (err) {
+    console.error('searchController: destination search failed:', err.message);
+  }
 
   if (!req.user) {
     return successResponse(res, 200, 'Search results fetched successfully', {

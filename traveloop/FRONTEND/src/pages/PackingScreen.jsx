@@ -8,34 +8,13 @@ const ICONS = { Clothes: Shirt, Electronics: Laptop, Documents: FileText, Toilet
 const COLORS = { Clothes: '#4F46E5', Electronics: '#7C3AED', Documents: '#F59E0B', Toiletries: '#06B6D4', 'Travel Essentials': '#22C55E', 'Weather Based Items': '#0EA5E9', Medicines: '#EF4444' };
 
 const defaultItems = {
-  Clothes: [
-    { text: 'T-shirts (3)', done: true }, { text: 'Jeans (2)', done: false },
-    { text: 'Jacket', done: false }, { text: 'Underwear', done: true }, { text: 'Swimwear', done: false },
-  ],
-  Electronics: [
-    { text: 'Phone charger', done: true }, { text: 'Power bank', done: false },
-    { text: 'Camera', done: false }, { text: 'Universal adapter', done: true },
-  ],
-  Documents: [
-    { text: 'Passport', done: true }, { text: 'Visa copies', done: true },
-    { text: 'Travel insurance', done: false }, { text: 'Hotel bookings', done: true },
-  ],
-  Toiletries: [
-    { text: 'Sunscreen', done: false }, { text: 'Toothbrush', done: true },
-    { text: 'Shampoo pouch', done: false }, { text: 'Face wash', done: false },
-  ],
-  'Travel Essentials': [
-    { text: 'Neck pillow', done: false }, { text: 'Reusable bottle', done: false },
-    { text: 'Luggage lock', done: true },
-  ],
-  'Weather Based Items': [
-    { text: 'Sunglasses', done: false }, { text: 'Water bottle', done: false },
-    { text: 'Rain jacket', done: false },
-  ],
-  Medicines: [
-    { text: 'First aid kit', done: false }, { text: 'Motion sickness pills', done: false },
-    { text: 'Prescribed meds', done: true },
-  ],
+  Clothes: [],
+  Electronics: [],
+  Documents: [],
+  Toiletries: [],
+  'Travel Essentials': [],
+  'Weather Based Items': [],
+  Medicines: [],
 };
 
 export default function PackingScreen() {

@@ -6,13 +6,7 @@ import AppLayout from '../components/layout/AppLayout';
 
 const COLORS = ['#4F46E5', '#22C55E', '#F59E0B', '#7C3AED', '#EF4444', '#06B6D4'];
 
-const defaultNotes = [
-  { id: 1, title: 'Hotel Check-in', content: 'Hotel Lumière, Paris\nCheck-in: 2 PM, Room 412\nConfirmation: #PAR29847', trip: 'Paris', ts: '2026-06-28 10:30', color: 0 },
-  { id: 2, title: 'Local Contact', content: 'Guide Marco: +39 338 123 4567\nMeeting point: Piazza Navona, 9 AM', trip: 'Rome', ts: '2026-06-29 14:15', color: 1 },
-  { id: 3, title: 'Flight Details', content: 'Air France AF1234\nDeparture: Jul 1, 6:30 AM\nTerminal 2E, Gate B42', trip: 'Paris', ts: '2026-06-30 09:00', color: 2 },
-  { id: 4, title: 'Packing Reminder', content: "Don't forget universal adapter and sunscreen! Also bring the printed visa copies.", trip: 'General', ts: '2026-06-30 20:00', color: 3 },
-  { id: 5, title: 'Restaurant Reservation', content: 'La Pepita Tapas Bar\nJul 8, 8:30 PM\nBooking under: Patel, 4 guests', trip: 'Barcelona', ts: '2026-07-01 11:00', color: 4 },
-];
+const defaultNotes = [];
 
 export default function JournalScreen() {
   const navigate = useNavigate();

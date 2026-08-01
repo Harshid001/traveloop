@@ -1,11 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, Platform, Dimensions } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getDestinationDetails } from '../services/api';
-import { convertCurrency, formatCurrency, getSupportedCurrencies } from '../services/currency';
-import { Heart, MapPin, CalendarDays, Clock, DollarSign, ChevronDown, ChevronLeft, Star, CloudSun } from 'lucide-react-native';
-
-const { width } = Dimensions.get('window');
+import { formatCurrency } from '../services/currency';
+import { Heart, MapPin, CalendarDays, ChevronLeft, Star, CloudSun } from 'lucide-react-native';
 
 export default function DestinationDetailScreen({ navigation, route }) {
   const { id } = route.params || { id: '1' };
@@ -18,8 +16,6 @@ export default function DestinationDetailScreen({ navigation, route }) {
   // Planning state
   const [activeTab, setActiveTab] = useState('Plan'); // Plan, Activities, Info
   const [days, setDays] = useState(4); // Duration
-  const [currency, setCurrency] = useState('USD');
-  const [showCurrencies, setShowCurrencies] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -37,28 +33,6 @@ export default function DestinationDetailScreen({ navigation, route }) {
     loadData();
   }, [loadData]);
 
-  // Derived budget based on duration
-  const budget = useMemo(() => {
-    if (!dest) return null;
-    const base = dest.baseBudget || {};
-    const flights = base.flights || 500;
-    const hotelPerNight = base.hotelPerNight || 100;
-    const foodPerDay = base.foodPerDay || 40;
-    const hotelTotal = hotelPerNight * (days - 1 > 0 ? days - 1 : 1);
-    const foodTotal = foodPerDay * days;
-    const activitiesTotal = 150 * (days / 2);
-    
-    const totalUSD = flights + hotelTotal + foodTotal + activitiesTotal;
-    
-    return {
-      flights: convertCurrency(flights, 'USD', currency),
-      hotel: convertCurrency(hotelTotal, 'USD', currency),
-      food: convertCurrency(foodTotal, 'USD', currency),
-      activities: convertCurrency(activitiesTotal, 'USD', currency),
-      total: convertCurrency(totalUSD, 'USD', currency)
-    };
-  }, [dest, days, currency]);
-
   if (loading || !dest) {
     return (
       <View className="flex-1 items-center justify-center bg-[#F8FAFC]">
@@ -72,7 +46,13 @@ export default function DestinationDetailScreen({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header Image Gallery */}
         <View className="relative w-full h-[350px]">
-          <Image source={{ uri: dest.images?.[0] || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800' }} className="w-full h-full" resizeMode="cover" />
+          {dest.images?.[0] ? (
+            <Image source={{ uri: dest.images[0] }} className="w-full h-full" resizeMode="cover" />
+          ) : (
+            <View className="w-full h-full items-center justify-center bg-teal-50">
+              <Text className="text-6xl">🌍</Text>
+            </View>
+          )}
           
           <View className="absolute inset-0 bg-black/20" />
           
@@ -107,7 +87,7 @@ export default function DestinationDetailScreen({ navigation, route }) {
           <View className="items-center">
             <View className="flex-row items-center mb-1">
               <Star color="#f59e0b" fill="#f59e0b" size={16} />
-              <Text className="text-slate-900 font-bold ml-1">{dest.rating ?? '4.5'}</Text>
+              <Text className="text-slate-900 font-bold ml-1">{dest.rating ?? '—'}</Text>
             </View>
               <Text className="text-slate-500 text-xs">{(dest.reviewsCount ?? 0).toLocaleString()} reviews</Text>
           </View>
@@ -115,9 +95,9 @@ export default function DestinationDetailScreen({ navigation, route }) {
           <View className="items-center">
             <View className="flex-row items-center mb-1">
               <CloudSun color="#0F9D8F" size={16} />
-              <Text className="text-slate-900 font-bold ml-1">{dest.weather?.temp ?? '22°C'}</Text>
+              <Text className="text-slate-900 font-bold ml-1">{dest.weather?.temp != null ? `${dest.weather.temp}°C` : '—'}</Text>
             </View>
-            <Text className="text-slate-500 text-xs">{dest.weather?.condition ?? 'Clear'}</Text>
+            <Text className="text-slate-500 text-xs">{dest.weather?.condition || (dest.weather?.temp != null ? 'Live' : 'Weather N/A')}</Text>
           </View>
         </View>
 
@@ -153,49 +133,38 @@ export default function DestinationDetailScreen({ navigation, route }) {
           </View>
 
           {/* Budget Estimator */}
-          <View className="bg-white rounded-3xl p-5 mb-5 shadow-sm border border-slate-100">
-            <View className="flex-row items-center justify-between mb-4">
-              <View className="flex-row items-center">
-                <DollarSign color="#0F9D8F" size={20} />
-                <Text className="text-lg font-bold text-slate-900 ml-2">Budget Estimate</Text>
+          {dest.baseBudget ? (
+            <View className="bg-white rounded-3xl p-5 mb-5 shadow-sm border border-slate-100">
+              <View className="flex-row items-center justify-between mb-4">
+                <View className="flex-row items-center">
+                  <Text className="text-lg font-bold text-slate-900 ml-2">Budget Estimate</Text>
+                </View>
               </View>
-              <TouchableOpacity onPress={() => setShowCurrencies(!showCurrencies)} className="flex-row items-center bg-slate-50 px-3 py-1.5 rounded-full">
-                <Text className="text-slate-900 font-bold mr-1">{currency}</Text>
-                <ChevronDown size={14} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-            
-            {showCurrencies && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-                {getSupportedCurrencies().map(c => (
-                  <TouchableOpacity 
-                    key={c} 
-                    onPress={() => { setCurrency(c); setShowCurrencies(false); }}
-                    className={`mr-2 px-3 py-1.5 rounded-full ${currency === c ? 'bg-primary' : 'bg-slate-100'}`}
-                  >
-                    <Text className={currency === c ? 'text-white font-bold' : 'text-slate-600'}>{c}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
 
-            <Text className="text-3xl font-black text-primary mb-4">{formatCurrency(budget.total, currency)}</Text>
-            
-            <View className="space-y-3">
-              <View className="flex-row justify-between items-center">
-                <Text className="text-slate-500 font-medium">Flights</Text>
-                <Text className="text-slate-900 font-bold">{formatCurrency(budget.flights, currency)}</Text>
-              </View>
-              <View className="flex-row justify-between items-center">
-                <Text className="text-slate-500 font-medium">Hotel ({Math.max(1, days-1)} nights)</Text>
-                <Text className="text-slate-900 font-bold">{formatCurrency(budget.hotel, currency)}</Text>
-              </View>
-              <View className="flex-row justify-between items-center">
-                <Text className="text-slate-500 font-medium">Food</Text>
-                <Text className="text-slate-900 font-bold">{formatCurrency(budget.food, currency)}</Text>
+              <Text className="text-3xl font-black text-primary mb-4">{formatCurrency(dest.baseBudget.total, 'USD')}</Text>
+
+              <View className="space-y-3">
+                {dest.baseBudget.flights != null && (
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-slate-500 font-medium">Flights</Text>
+                    <Text className="text-slate-900 font-bold">{formatCurrency(dest.baseBudget.flights, 'USD')}</Text>
+                  </View>
+                )}
+                {dest.baseBudget.hotelPerNight != null && (
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-slate-500 font-medium">Hotel (per night)</Text>
+                    <Text className="text-slate-900 font-bold">{formatCurrency(dest.baseBudget.hotelPerNight, 'USD')}</Text>
+                  </View>
+                )}
+                {dest.baseBudget.foodPerDay != null && (
+                  <View className="flex-row justify-between items-center">
+                    <Text className="text-slate-500 font-medium">Food (per day)</Text>
+                    <Text className="text-slate-900 font-bold">{formatCurrency(dest.baseBudget.foodPerDay, 'USD')}</Text>
+                  </View>
+                )}
               </View>
             </View>
-          </View>
+          ) : null}
           
           <Text className="text-slate-500 leading-6 text-base">{dest.description}</Text>
         </View>
@@ -207,8 +176,8 @@ export default function DestinationDetailScreen({ navigation, route }) {
         style={{ paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }}
       >
         <View>
-          <Text className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Total Estimate</Text>
-          <Text className="text-xl font-black text-slate-900">{formatCurrency(budget.total, currency)}</Text>
+          <Text className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">{days} days planned</Text>
+          <Text className="text-xl font-black text-slate-900">Ready to build</Text>
         </View>
         <TouchableOpacity 
           className="bg-primary px-8 py-3.5 rounded-full shadow-lg"

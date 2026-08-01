@@ -39,7 +39,7 @@ const destinationSchema = new mongoose.Schema(
     highlights: { type: [String], default: [] },
     source: {
       type: String,
-      enum: ['manual', 'amadeus', 'google', 'tripadvisor', 'curated'],
+      enum: ['manual', 'amadeus', 'google', 'tripadvisor', 'curated', 'wikidata'],
       default: 'manual',
     },
     lastEnriched: { type: Date, default: null },

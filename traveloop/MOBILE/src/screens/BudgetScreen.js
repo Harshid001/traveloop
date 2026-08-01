@@ -3,7 +3,6 @@ import { Alert, ScrollView, Share, Text, TextInput, TouchableOpacity, View } fro
 import EmptyState from '../components/EmptyState';
 import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
-import { destinations } from '../constants/data';
 import { tripsApi } from '../services/api';
 import { addNotification, getTripScoped, setTripScoped } from '../services/appData';
 import { STORAGE_KEYS } from '../services/storage';
@@ -20,10 +19,10 @@ function tripDays(trip) {
 }
 
 export default function BudgetScreen({ navigation, route }) {
-  const trip = route.params?.trip || destinations[0];
+  const trip = route.params?.trip || {};
   const tripId = trip.id || trip._id || 'default';
   const [currency, setCurrency] = useState('INR');
-  const [total, setTotal] = useState(String(trip.budgetAmount || 120000));
+  const [total, setTotal] = useState(String(trip.budgetAmount || 0));
   const [expenses, setExpenses] = useState([]);
   const [entry, setEntry] = useState(blankEntry);
   const [editingId, setEditingId] = useState(null);
@@ -35,7 +34,7 @@ export default function BudgetScreen({ navigation, route }) {
       if (!mounted) return;
       if (stored) {
         setCurrency(stored.currency || 'INR');
-        setTotal(String(stored.total || 120000));
+        setTotal(String(stored.total || 0));
         setExpenses(stored.expenses || []);
       }
     });

@@ -4,13 +4,6 @@
  * Amadeus, TripAdvisor, Unsplash) into unified data shapes used by UI components.
  */
 
-import { destinations as fallbackDestinations } from '../constants/data';
-
-/**
- * Default fallback image when no image is available.
- */
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format';
-
 /**
  * Normalize any API destination response into the standard destination card shape
  * used by FeaturedDestinationCard, DestinationCard, and list components.
@@ -48,9 +41,9 @@ export const toDestinationCard = (raw) => {
     images: normalizeImages(raw),
 
     // Ratings
-    rating: raw.rating || raw.score || 4.5,
+    rating: raw.rating || raw.score || null,
     reviewCount: raw.reviewCount || raw.userRatingsTotal || raw.reviews?.length || 0,
-    popularity: raw.popularity || 50,
+    popularity: raw.popularity || null,
 
     // Budget
     price: raw.price || formatBudget(raw),
@@ -73,7 +66,7 @@ export const toDestinationCard = (raw) => {
     // Content
     description: raw.description || raw.overview || '',
     highlights: raw.highlights || raw.activities || [],
-    facilities: raw.facilities || ['Hotel', 'Meals', 'Guide', 'Transfers'],
+    facilities: raw.facilities || [],
     activities: raw.activities || [],
     nearbyAttractions: raw.nearbyAttractions || [],
 
@@ -187,7 +180,7 @@ const resolveImage = (raw) => {
   if (raw.photos?.length > 0) {
     return raw.photos[0].url || raw.photos[0];
   }
-  return FALLBACK_IMAGE;
+  return '';
 };
 
 /** Normalize images array from various sources */
@@ -223,7 +216,7 @@ const normalizeImages = (raw) => {
   // Fallback to single image
   if (images.length === 0) {
     const img = resolveImage(raw);
-    if (img !== FALLBACK_IMAGE) {
+    if (img) {
       images.push({
         url: img,
         thumbnail: img,

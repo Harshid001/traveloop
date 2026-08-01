@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Lazy‑loaded page components
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 const OnboardingScreen = lazy(() => import('./pages/OnboardingScreen'));
 const WelcomeScreen = lazy(() => import('./pages/WelcomeScreen'));
 const LoginScreen = lazy(() => import('./pages/LoginScreen'));
@@ -44,7 +45,7 @@ export default function App() {
           <ErrorBoundary>
             <Suspense fallback={<FullScreenSpinner />}>
           <Routes>
-        <Route path="/" element={<Navigate to="/onboarding" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/onboarding" element={<OnboardingScreen />} />
         <Route path="/welcome" element={<WelcomeScreen />} />
 
@@ -72,7 +73,7 @@ export default function App() {
         <Route path="/journal" element={<PrivatePage><JournalScreen /></PrivatePage>} />
         <Route path="/profile" element={<PrivatePage><ProfileScreen /></PrivatePage>} />
 
-        <Route path="*" element={<Navigate to="/onboarding" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
           </Suspense>
       </ErrorBoundary>

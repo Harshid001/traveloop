@@ -1,26 +1,8 @@
 const asyncHandler = require('../utils/asyncHandler');
-const { getChatbotResponse } = require('../services/chatbotService');
+const { getChatbotResponse, isAIConfigured } = require('../services/chatbotService');
 const ChatMessage = require('../models/ChatMessage');
-const destinations = require('../data/destinations');
 
-function buildAssistantExtras(message) {
-  const text = message.toLowerCase();
-  const matchingDestinations = destinations
-    .filter((item) =>
-      text.includes(item.name.toLowerCase()) ||
-      item.activities.some((activity) => text.includes(String(activity).toLowerCase().split(' ')[0])) ||
-      text.includes(item.category.toLowerCase()),
-    )
-    .slice(0, 3);
-
-  const cards = (matchingDestinations.length ? matchingDestinations : destinations.slice(0, 3)).map((item) => ({
-    title: item.name,
-    subtitle: `${item.country} • ${item.rating} rating • $${item.budgetEstimate}`,
-    image: item.image,
-    href: `/destinations/${item.id}`,
-    tags: [item.category, item.bestTimeToVisit],
-  }));
-
+function buildAssistantExtras() {
   const links = [
     { label: 'Explore destinations', href: '/explore' },
     { label: 'Create itinerary', href: '/itinerary-builder' },
@@ -35,10 +17,7 @@ function buildAssistantExtras(message) {
     'Suggest a trip',
   ];
 
-  if (text.includes('packing')) suggestions.unshift('What should I pack?');
-  if (text.includes('budget')) suggestions.unshift('Estimate my daily budget');
-
-  return { cards, links, suggestions: [...new Set(suggestions)].slice(0, 6) };
+  return { cards: [], links, suggestions: [...new Set(suggestions)].slice(0, 6) };
 }
 
 // @desc    Process chatbot message
@@ -54,20 +33,28 @@ const processMessage = asyncHandler(async (req, res) => {
     });
   }
 
+  if (!isAIConfigured()) {
+    return res.status(503).json({
+      success: false,
+      message: 'AI assistant is not configured. Please try again later.'
+    });
+  }
+
   // Get AI Response
   const reply = await getChatbotResponse(message, history || []);
 
   // Format expected by frontend:
   // { reply: "...", suggestions: [], meta: {} }
-  
-  const extras = buildAssistantExtras(message);
+
+  const extras = buildAssistantExtras();
   const responsePayload = {
     reply,
     cards: extras.cards,
     links: extras.links,
     suggestions: extras.suggestions,
     meta: {
-      timestamp: new Date()
+      timestamp: new Date(),
+      aiConfigured: isAIConfigured(),
     }
   };
 

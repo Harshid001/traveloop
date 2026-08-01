@@ -60,7 +60,7 @@ const getPersonalizedRecommendations = async (userId, signals = {}) => {
     return enriched;
   } catch (error) {
     console.error('Recommendation service error:', error.message);
-    return getFallbackRecommendations();
+    return [];
   }
 };
 
@@ -105,8 +105,8 @@ const getSeasonalRecommendations = async (month) => {
   const cached = cache.get(cacheKey);
   if (cached) return cached;
 
-  const seasonalDestinations = getSeasonalData(month);
-  const enriched = await enrichWithImages(seasonalDestinations);
+  const trending = await amadeusService.getTrendingDestinations('');
+  const enriched = await enrichWithImages(trending.slice(0, 6));
 
   cache.set(cacheKey, enriched, CACHE_TTL.TRENDING);
   return enriched;
@@ -132,8 +132,7 @@ const getAiSuggestions = async (query, _preferences = {}) => {
     }
 
     if (intent.season) {
-      const monthMap = { winter: 1, spring: 4, summer: 7, fall: 10 };
-      const seasonal = getSeasonalData(monthMap[intent.season] || new Date().getMonth() + 1);
+      const seasonal = await amadeusService.getTrendingDestinations('');
       results.push(...seasonal);
     }
 
@@ -164,7 +163,7 @@ const getAiSuggestions = async (query, _preferences = {}) => {
     return enriched;
   } catch (error) {
     console.error('AI suggestions error:', error.message);
-    return getFallbackRecommendations();
+    return [];
   }
 };
 
@@ -273,46 +272,6 @@ const parseQueryIntent = (query) => {
 };
 
 /**
- * Get seasonal destination data by month.
- */
-const getSeasonalData = (month) => {
-  const seasonMap = {
-    // Winter (Dec-Feb): tropical beaches, ski resorts
-    12: [
-      { name: 'Maldives', city: 'Male', country: 'Maldives', type: 'beach', rating: 4.9, popularity: 92, coordinates: { lat: 4.1755, lng: 73.5093 }, bestSeason: 'December-April', estimatedBudget: { mid: 3000 } },
-      { name: 'Swiss Alps', city: 'Interlaken', country: 'Switzerland', type: 'mountain', rating: 4.8, popularity: 88, coordinates: { lat: 46.6863, lng: 7.8632 }, bestSeason: 'December-March', estimatedBudget: { mid: 2500 } },
-      { name: 'Phuket', city: 'Phuket', country: 'Thailand', type: 'beach', rating: 4.6, popularity: 85, coordinates: { lat: 7.8804, lng: 98.3923 }, bestSeason: 'November-March', estimatedBudget: { mid: 800 } },
-    ],
-    1: null, 2: null, // same as December
-    // Spring (Mar-May): cherry blossoms, moderate climates
-    3: [
-      { name: 'Kyoto', city: 'Kyoto', country: 'Japan', type: 'cultural', rating: 4.9, popularity: 90, coordinates: { lat: 35.0116, lng: 135.7681 }, bestSeason: 'March-May', estimatedBudget: { mid: 1800 } },
-      { name: 'Amsterdam', city: 'Amsterdam', country: 'Netherlands', type: 'city', rating: 4.7, popularity: 86, coordinates: { lat: 52.3676, lng: 4.9041 }, bestSeason: 'March-May', estimatedBudget: { mid: 1500 } },
-      { name: 'Morocco', city: 'Marrakech', country: 'Morocco', type: 'cultural', rating: 4.6, popularity: 82, coordinates: { lat: 31.6295, lng: -7.9811 }, bestSeason: 'March-May', estimatedBudget: { mid: 900 } },
-    ],
-    4: null, 5: null,
-    // Summer (Jun-Aug): European cities, islands, mountains
-    6: [
-      { name: 'Santorini', city: 'Thira', country: 'Greece', type: 'island', rating: 4.9, popularity: 94, coordinates: { lat: 36.3932, lng: 25.4615 }, bestSeason: 'June-September', estimatedBudget: { mid: 2000 } },
-      { name: 'Barcelona', city: 'Barcelona', country: 'Spain', type: 'city', rating: 4.7, popularity: 89, coordinates: { lat: 41.3874, lng: 2.1686 }, bestSeason: 'May-September', estimatedBudget: { mid: 1500 } },
-      { name: 'Iceland', city: 'Reykjavik', country: 'Iceland', type: 'nature', rating: 4.8, popularity: 87, coordinates: { lat: 64.1466, lng: -21.9426 }, bestSeason: 'June-August', estimatedBudget: { mid: 2200 } },
-    ],
-    7: null, 8: null,
-    // Fall (Sep-Nov): foliage, wine regions
-    9: [
-      { name: 'New England', city: 'Burlington', country: 'USA', type: 'nature', rating: 4.7, popularity: 85, coordinates: { lat: 44.4759, lng: -73.2121 }, bestSeason: 'September-October', estimatedBudget: { mid: 1800 } },
-      { name: 'Tuscany', city: 'Florence', country: 'Italy', type: 'cultural', rating: 4.8, popularity: 88, coordinates: { lat: 43.7696, lng: 11.2558 }, bestSeason: 'September-November', estimatedBudget: { mid: 1600 } },
-      { name: 'Patagonia', city: 'El Calafate', country: 'Argentina', type: 'adventure', rating: 4.8, popularity: 83, coordinates: { lat: -50.3403, lng: -72.2648 }, bestSeason: 'October-March', estimatedBudget: { mid: 2000 } },
-    ],
-    10: null, 11: null,
-  };
-
-  // Fall back to seasonal data
-  const data = seasonMap[month] || seasonMap[12] || seasonMap[6] || seasonMap[3] || seasonMap[9];
-  return data || seasonMap[12];
-};
-
-/**
  * Enrich destinations with images from Unsplash.
  */
 const enrichWithImages = async (destinations) => {
@@ -347,16 +306,6 @@ const enrichWithImages = async (destinations) => {
     return destinations;
   }
 };
-
-/**
- * Fallback recommendations when all APIs fail.
- */
-const getFallbackRecommendations = () => [
-  { id: 'rec_1', name: 'Bali', city: 'Denpasar', country: 'Indonesia', type: 'beach', rating: 4.8, popularity: 92, image: { url: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&auto=format' }, coordinates: { lat: -8.3405, lng: 115.092 }, bestSeason: 'April-October', estimatedBudget: { mid: 1200 }, tags: ['beach', 'culture', 'nature'] },
-  { id: 'rec_2', name: 'Paris', city: 'Paris', country: 'France', type: 'city', rating: 4.7, popularity: 95, image: { url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&auto=format' }, coordinates: { lat: 48.8566, lng: 2.3522 }, bestSeason: 'April-October', estimatedBudget: { mid: 2000 }, tags: ['city', 'culture', 'food'] },
-  { id: 'rec_3', name: 'Tokyo', city: 'Tokyo', country: 'Japan', type: 'city', rating: 4.8, popularity: 93, image: { url: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&auto=format' }, coordinates: { lat: 35.6762, lng: 139.6503 }, bestSeason: 'March-May', estimatedBudget: { mid: 1800 }, tags: ['city', 'culture', 'food'] },
-  { id: 'rec_4', name: 'Santorini', city: 'Thira', country: 'Greece', type: 'island', rating: 4.9, popularity: 91, image: { url: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&auto=format' }, coordinates: { lat: 36.3932, lng: 25.4615 }, bestSeason: 'June-September', estimatedBudget: { mid: 2000 }, tags: ['island', 'romance', 'luxury'] },
-];
 
 module.exports = {
   getPersonalizedRecommendations,

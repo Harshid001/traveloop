@@ -3,17 +3,12 @@ import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
 import AutocompleteDropdown from '../components/AutocompleteDropdown';
-import { FALLBACK_DESTINATIONS } from '../constants/data';
 import { tripsApi, placesApi } from '../services/api';
 import { getTripScoped, setTripScoped } from '../services/appData';
 import { STORAGE_KEYS } from '../services/storage';
 import { validateItineraryDay } from '../services/validators';
 
 const emptyDraft = { title: '', date: '', stops: '', timeSlots: '', notes: '', cost: '' };
-const fallbackDays = [
-  { id: '1', title: 'Arrival and easy walk', date: '2026-06-20', stops: ['Hotel check-in', 'Sunset viewpoint'], timeSlots: ['16:00', '18:00'], notes: 'Keep the first day light.', cost: 2500 },
-  { id: '2', title: 'Landmarks and food tour', date: '2026-06-21', stops: ['Museum', 'Market lunch', 'River cruise'], timeSlots: ['09:30', '13:00', '17:00'], notes: 'Book morning slots.', cost: 6500 },
-];
 
 function dateKey(date) {
   const parsed = new Date(date);
@@ -24,7 +19,7 @@ function dateKey(date) {
 function generateDays(trip) {
   const start = new Date(trip?.startDate || '');
   const end = new Date(trip?.endDate || trip?.startDate || '');
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return fallbackDays;
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return [];
   const days = [];
   const cursor = new Date(start);
   while (cursor <= end && days.length < 14) {
@@ -39,11 +34,11 @@ function generateDays(trip) {
     });
     cursor.setDate(cursor.getDate() + 1);
   }
-  return days.length ? days : fallbackDays;
+  return days;
 }
 
 export default function ItineraryBuilderScreen({ navigation, route }) {
-  const trip = route.params?.trip || FALLBACK_DESTINATIONS[0];
+  const trip = route.params?.trip || {};
   const tripId = trip.id || trip._id || 'default';
   const [days, setDays] = useState(route.params?.days || generateDays(trip));
   const [draft, setDraft] = useState(emptyDraft);

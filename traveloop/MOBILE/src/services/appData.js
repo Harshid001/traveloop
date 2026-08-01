@@ -1,4 +1,3 @@
-import { destinations, myTrips, notifications as demoNotifications, profile as demoProfile } from '../constants/data';
 import { getJson, setJson, STORAGE_KEYS } from './storage';
 
 const today = new Date();
@@ -12,16 +11,16 @@ export function normalizeDestination(item) {
     country: item.country || item.destination || '',
     location: item.location || [item.name, item.country].filter(Boolean).join(', '),
     type: item.type || item.category || 'city',
-    duration: item.duration || item.bestTime || 'Flexible',
-    durationDays: item.durationDays || Number(String(item.duration || '').match(/\d+/)?.[0]) || 4,
+    duration: item.duration || '',
+    durationDays: item.durationDays || Number(String(item.duration || '').match(/\d+/)?.[0]) || 0,
     price: item.price || (item.budgetEstimate ? `INR ${Number(item.budgetEstimate).toLocaleString('en-IN')}` : 'Custom plan'),
     budgetAmount: item.budgetAmount || Number(String(item.price || item.estimatedBudget || item.budgetEstimate || '').replace(/\D/g, '')) || 0,
-    image: item.image || destinations[0].image,
-    rating: Number(item.rating || 4.7),
-    bestTime: item.bestTime || item.bestTimeToVisit || 'Flexible',
-    description: item.description || 'A Traveloop destination ready to compare, save, and plan.',
+    image: item.image || '',
+    rating: item.rating ? Number(item.rating) : null,
+    bestTime: item.bestTime || '',
+    description: item.description || '',
     activities: Array.isArray(item.activities) ? item.activities : [],
-    facilities: item.facilities || ['Hotel', 'Meals', 'Guide', 'Transfers'],
+    facilities: item.facilities || [],
   };
 }
 
@@ -37,12 +36,12 @@ export function normalizeTrip(trip) {
     destinations: Array.isArray(trip.destinations) ? trip.destinations : [trip.destination || trip.location].filter(Boolean),
     totalBudget: trip.totalBudget || trip.budget || trip.price || 'Custom budget',
     budgetAmount: Number(String(trip.budget || trip.totalBudget || trip.price || '').replace(/\D/g, '')) || 0,
-    image: trip.image || trip.coverImage || destinations[0].image,
-    activities: Number(trip.activities || trip.activitiesCount || trip.tags?.length || 0) || 4,
-    rating: trip.rating || 4.8,
-    description: trip.description || 'A planned Traveloop journey with itinerary, budget, packing, and journal tools.',
+    image: trip.image || trip.coverImage || '',
+    activities: Number(trip.activities || trip.activitiesCount || trip.tags?.length || 0) || 0,
+    rating: trip.rating || null,
+    description: trip.description || '',
     type: trip.type || trip.tripType || 'custom',
-    facilities: trip.facilities || ['Itinerary', 'Budget', 'Packing', 'Journal'],
+    facilities: trip.facilities || [],
   };
 }
 
@@ -57,7 +56,7 @@ export function calculateTripStatus(trip) {
 }
 
 export async function getCurrentUser() {
-  return getJson(STORAGE_KEYS.user, demoProfile);
+  return getJson(STORAGE_KEYS.user, null);
 }
 
 export async function setCurrentUser(user) {
@@ -87,7 +86,7 @@ export async function removeWishlistItem(id) {
 
 export async function getLocalTrips() {
   const stored = await getJson(STORAGE_KEYS.trips, null);
-  return stored || myTrips.map(normalizeTrip);
+  return stored || [];
 }
 
 export async function saveLocalTrip(trip) {
@@ -107,7 +106,7 @@ export async function deleteLocalTrip(id) {
 
 export async function getLocalNotifications() {
   const stored = await getJson(STORAGE_KEYS.notifications, null);
-  return stored || demoNotifications.map((item) => ({ ...item, read: false, type: item.type || 'system' }));
+  return stored || [];
 }
 
 export async function addNotification(notification) {

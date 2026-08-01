@@ -1,42 +1,61 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
-const staticDestinations = require('../data/destinations');
+const amadeusService = require('../services/amadeusService');
+const destinationStore = require('../services/destinationStore');
 
-function filterDestinations(query) {
-  const { search, category, budget, rating, sort } = query;
-  let data = [...staticDestinations];
+const toAppShape = (item, index = 0) => ({
+  id: item.iataCode || item.name || `dest-${index}`,
+  name: item.name || item.city || '',
+  city: item.city || '',
+  country: item.country || '',
+  lat: item.coordinates?.lat ?? null,
+  lng: item.coordinates?.lng ?? null,
+  type: item.type || 'city',
+  image: item.image?.url || item.image || null,
+  rating: item.rating ?? null,
+  budgetEstimate: item.budgetEstimate ?? null,
+  description: item.description || '',
+  activities: item.activities || [],
+});
 
+const getDestinations = asyncHandler(async (req, res) => {
+  const { search, category, rating } = req.query;
+  const seeded = await destinationStore.isSeeded();
+
+  let data;
   if (search) {
-    const text = search.toLowerCase();
-    data = data.filter((item) =>
-      `${item.name} ${item.country} ${item.category} ${item.description} ${item.activities.join(' ')}`
-        .toLowerCase()
-        .includes(text),
-    );
+    const dbResults = await destinationStore.search(search);
+    if (dbResults.length) {
+      data = dbResults.map(destinationStore.toCard);
+    } else {
+      const results = await amadeusService.searchDestinations(search);
+      data = results.map(toAppShape);
+    }
+  } else if (seeded) {
+    data = (await destinationStore.getTrending(20)).map(destinationStore.toCard);
+  } else {
+    const results = await amadeusService.getRecommendedDestinations();
+    data = results.map(toAppShape);
   }
 
   if (category && category !== 'All') {
-    data = data.filter((item) => item.category.toLowerCase() === category.toLowerCase());
+    data = data.filter((item) => item.type === category.toLowerCase());
   }
-
-  if (budget === 'low') data = data.filter((item) => item.budgetEstimate <= 1800);
-  if (budget === 'medium') data = data.filter((item) => item.budgetEstimate > 1800 && item.budgetEstimate <= 3200);
-  if (budget === 'high') data = data.filter((item) => item.budgetEstimate > 3200);
-  if (rating) data = data.filter((item) => item.rating >= Number(rating));
-
-  if (sort === 'highest-rated') data.sort((a, b) => b.rating - a.rating);
-  if (sort === 'low-budget') data.sort((a, b) => a.budgetEstimate - b.budgetEstimate);
-  if (sort === 'high-budget') data.sort((a, b) => b.budgetEstimate - a.budgetEstimate);
-
-  return data;
-}
-
-const getDestinations = asyncHandler(async (req, res) => {
-  successResponse(res, 200, 'Destinations fetched successfully', filterDestinations(req.query));
+  if (rating) {
+    data = data.filter((item) => item.rating !== null && item.rating >= Number(rating));
+  }
+  successResponse(res, 200, 'Destinations fetched successfully', data);
 });
 
 const getDestination = asyncHandler(async (req, res) => {
-  const destination = staticDestinations.find((item) => item.id === String(req.params.id));
+  const stored = await destinationStore.getById(req.params.id);
+  let destination;
+  if (stored) {
+    destination = destinationStore.toCard(stored);
+  } else {
+    const code = String(req.params.id).toUpperCase();
+    destination = await amadeusService.getCityByCode(code);
+  }
   if (!destination) return errorResponse(res, 404, 'Destination not found');
   successResponse(res, 200, 'Destination fetched successfully', destination);
 });
@@ -44,5 +63,4 @@ const getDestination = asyncHandler(async (req, res) => {
 module.exports = {
   getDestinations,
   getDestination,
-  filterDestinations,
 };

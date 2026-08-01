@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Image, FlatList, Platform, Ac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, Search, MapPin, Compass } from 'lucide-react-native';
 import { getTrendingDestinations, getSeasonalRecommendations } from '../services/api';
+import { getCurrentUser } from '../services/appData';
 import DestinationCard from '../components/DestinationCard';
 
 const CATEGORIES = [
@@ -19,6 +20,11 @@ export default function HomeScreen({ navigation }) {
   const [trending, setTrending] = useState([]);
   const [seasonal, setSeasonal] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    getCurrentUser().then((stored) => setUser(stored));
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -47,36 +53,43 @@ export default function HomeScreen({ navigation }) {
     return 'Good evening';
   };
 
-  const renderHeader = () => (
-    <View className="flex-row justify-between items-center px-5 mb-6">
-      <View className="flex-row items-center">
-        <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150' }} 
-          className="w-12 h-12 rounded-full mr-3"
-        />
-        <View>
-          <Text className="text-slate-500 text-sm font-medium">{greeting()}</Text>
-          <Text className="text-slate-900 text-xl font-bold">Traveler ✌️</Text>
+  const renderHeader = () => {
+    const name = user?.name || user?.firstName || 'Traveler';
+    const initials = name.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+    return (
+      <View className="flex-row justify-between items-center px-5 mb-6">
+        <View className="flex-row items-center">
+          {user?.avatar ? (
+            <Image source={{ uri: user.avatar }} className="w-12 h-12 rounded-full mr-3" />
+          ) : (
+            <View className="w-12 h-12 rounded-full bg-primary/15 items-center justify-center mr-3">
+              <Text className="font-black text-primary">{initials || 'T'}</Text>
+            </View>
+          )}
+          <View>
+            <Text className="text-slate-500 text-sm font-medium">{greeting()}</Text>
+            <Text className="text-slate-900 text-xl font-bold">{name}</Text>
+          </View>
+        </View>
+        <View className="flex-row items-center">
+          <TouchableOpacity 
+            className="w-10 h-10 rounded-full bg-white items-center justify-center mr-3"
+            style={{ shadowColor: '#0F172A', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
+            onPress={() => navigation.navigate('Explore')}
+          >
+            <Search size={20} color="#0F172A" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            className="w-10 h-10 rounded-full bg-white items-center justify-center relative"
+            style={{ shadowColor: '#0F172A', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
+          >
+            <Bell size={20} color="#0F172A" />
+            <View className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+          </TouchableOpacity>
         </View>
       </View>
-      <View className="flex-row items-center">
-        <TouchableOpacity 
-          className="w-10 h-10 rounded-full bg-white items-center justify-center mr-3"
-          style={{ shadowColor: '#0F172A', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
-          onPress={() => navigation.navigate('Explore')}
-        >
-          <Search size={20} color="#0F172A" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          className="w-10 h-10 rounded-full bg-white items-center justify-center relative"
-          style={{ shadowColor: '#0F172A', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
-        >
-          <Bell size={20} color="#0F172A" />
-          <View className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderCreateTripHero = () => (
     <TouchableOpacity
@@ -99,11 +112,11 @@ export default function HomeScreen({ navigation }) {
       <View className="absolute inset-0 bg-black/40 p-6 justify-between">
         <View className="bg-white/20 backdrop-blur-md self-start px-3 py-1.5 rounded-full flex-row items-center">
           <Compass size={14} color="#fff" />
-          <Text className="text-white text-xs font-bold ml-1.5">AI Planner</Text>
+          <Text className="text-white text-xs font-bold ml-1.5">Trip Planner</Text>
         </View>
         <View>
           <Text className="text-white text-2xl font-black mb-1">Plan Your Dream Trip</Text>
-          <Text className="text-white/90 text-sm">Let AI build your perfect itinerary</Text>
+          <Text className="text-white/90 text-sm">Build your perfect itinerary</Text>
         </View>
       </View>
     </TouchableOpacity>

@@ -1,5 +1,3 @@
-const UNSPLASH_BASE = 'https://images.unsplash.com';
-
 export function optimizeImageUrl(url, { width = 400, quality = 80, format = 'webp' } = {}) {
   if (!url) return url;
   if (url.includes('unsplash.com')) {
@@ -23,5 +21,3 @@ export function srcSet(url, widths = [400, 800, 1200]) {
     .map((w) => `${optimizeImageUrl(url, { width: w })} ${w}w`)
     .join(', ');
 }
-
-export const DEFAULT_TRAVEL_IMAGE = `${UNSPLASH_BASE}/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80`;

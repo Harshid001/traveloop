@@ -2,14 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, Share, Text, View } from 'react-native';
 import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
-import { destinations } from '../constants/data';
 import { getTripScoped } from '../services/appData';
 import { STORAGE_KEYS } from '../services/storage';
-
-const fallbackDays = [
-  { id: '1', title: 'Arrival and easy walk', date: '2026-06-20', stops: ['Hotel check-in', 'Sunset viewpoint'], notes: 'Keep first day light.', cost: 2500 },
-  { id: '2', title: 'Landmarks and food tour', date: '2026-06-21', stops: ['Museum', 'Market lunch', 'River cruise'], notes: 'Book morning slots.', cost: 6500 },
-];
 
 function buildShareText(trip, days) {
   const lines = [`${trip.title || trip.name || 'Traveloop itinerary'}`];
@@ -22,9 +16,9 @@ function buildShareText(trip, days) {
 }
 
 export default function ItineraryViewScreen({ navigation, route }) {
-  const trip = route.params?.trip || destinations[0];
+  const trip = route.params?.trip || {};
   const tripId = trip.id || trip._id || 'default';
-  const [days, setDays] = useState(route.params?.days || fallbackDays);
+  const [days, setDays] = useState(route.params?.days || []);
   const [status, setStatus] = useState('');
 
   useEffect(() => {
@@ -68,27 +62,39 @@ export default function ItineraryViewScreen({ navigation, route }) {
           </View>
         </View>
         {status ? <Text className="mt-4 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-primary">{status}</Text> : null}
-        {days.map((day, index) => (
-          <View key={day.id} className="mt-5 flex-row">
-            <View className="mr-4 items-center">
-              <View className="h-9 w-9 items-center justify-center rounded-full bg-primary">
-                <Text className="font-black text-white">{index + 1}</Text>
-              </View>
-              <View className="w-0.5 flex-1 bg-teal-100" />
-            </View>
-            <View className="flex-1 rounded-3xl bg-white p-5">
-              <Text className="font-bold text-primary">{day.date}</Text>
-              <Text className="mt-2 text-xl font-black text-dark">{day.title}</Text>
-              {(day.stops || []).map((stop, stopIndex) => (
-                <Text key={`${day.id}-${stop}-${stopIndex}`} className="mt-3 text-base font-semibold text-slate-600">
-                  {(day.timeSlots || [])[stopIndex] ? `${day.timeSlots[stopIndex]} | ` : ''}{stop}
-                </Text>
-              ))}
-              {day.notes ? <Text className="mt-3 text-sm leading-6 text-slate-500">{day.notes}</Text> : null}
-              <Text className="mt-3 text-xs font-black text-slate-400">Cost: INR {(Number(day.cost) || 0).toLocaleString('en-IN')}</Text>
+        {days.length === 0 ? (
+          <View className="mt-10 items-center rounded-3xl bg-white p-8">
+            <Text className="text-lg font-black text-dark">No itinerary days yet</Text>
+            <Text className="mt-2 text-center text-base leading-6 text-slate-500">
+              Add days with stops, time slots, notes, and costs in the builder, then preview them here.
+            </Text>
+            <View className="mt-6 w-full">
+              <PrimaryButton title="Open Itinerary Builder" onPress={() => navigation.navigate('ItineraryBuilder', { trip })} />
             </View>
           </View>
-        ))}
+        ) : (
+          days.map((day, index) => (
+            <View key={day.id} className="mt-5 flex-row">
+              <View className="mr-4 items-center">
+                <View className="h-9 w-9 items-center justify-center rounded-full bg-primary">
+                  <Text className="font-black text-white">{index + 1}</Text>
+                </View>
+                <View className="w-0.5 flex-1 bg-teal-100" />
+              </View>
+              <View className="flex-1 rounded-3xl bg-white p-5">
+                <Text className="font-bold text-primary">{day.date}</Text>
+                <Text className="mt-2 text-xl font-black text-dark">{day.title}</Text>
+                {(day.stops || []).map((stop, stopIndex) => (
+                  <Text key={`${day.id}-${stop}-${stopIndex}`} className="mt-3 text-base font-semibold text-slate-600">
+                    {(day.timeSlots || [])[stopIndex] ? `${day.timeSlots[stopIndex]} | ` : ''}{stop}
+                  </Text>
+                ))}
+                {day.notes ? <Text className="mt-3 text-sm leading-6 text-slate-500">{day.notes}</Text> : null}
+                <Text className="mt-3 text-xs font-black text-slate-400">Cost: INR {(Number(day.cost) || 0).toLocaleString('en-IN')}</Text>
+              </View>
+            </View>
+          ))
+        )}
       </ScrollView>
       <View className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-5 pb-8 pt-4">
         <View className="flex-row">

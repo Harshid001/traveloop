@@ -1,7 +1,7 @@
 /**
  * @fileoverview OpenWeatherMap API proxy service.
  * Wraps current weather, forecast, and convenience summary endpoints.
- * Returns normalized weather objects; falls back gracefully when unavailable.
+ * Returns normalized weather objects; propagates nulls when data is unavailable.
  */
 
 const axios = require('axios');
@@ -53,12 +53,12 @@ const normalizeWeather = (data) => {
   };
 };
 
-/** Standard fallback when the weather API is unavailable. */
-const FALLBACK_WEATHER = {
+/** Standard empty shape when the weather API is unavailable. */
+const emptyWeather = () => ({
   temp: null,
   feelsLike: null,
   humidity: null,
-  description: 'Weather data unavailable',
+  description: '',
   icon: '',
   iconUrl: '',
   windSpeed: null,
@@ -66,7 +66,7 @@ const FALLBACK_WEATHER = {
   condition: 'unknown',
   sunrise: null,
   sunset: null,
-};
+});
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -96,7 +96,7 @@ const getCurrentWeather = async (lat, lng) => {
     };
   } catch (error) {
     console.error('weatherService.getCurrentWeather error:', error.message);
-    return { ...FALLBACK_WEATHER, location: '', country: '' };
+    return { ...emptyWeather(), location: '', country: '' };
   }
 };
 
@@ -171,7 +171,7 @@ const getWeatherSummary = async (lat, lng) => {
   } catch (error) {
     console.error('weatherService.getWeatherSummary error:', error.message);
     return {
-      current: FALLBACK_WEATHER,
+      current: emptyWeather(),
       upcoming: [],
       location: '',
       country: '',

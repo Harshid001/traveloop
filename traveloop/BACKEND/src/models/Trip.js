@@ -76,6 +76,11 @@ const tripSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // Last time a trip-date reminder email was sent (trip reminders)
+    lastReminderDate: {
+      type: Date,
+      default: null,
+    },
     // Public share identifier for read‑only itinerary links
     shareId: {
       type: String,

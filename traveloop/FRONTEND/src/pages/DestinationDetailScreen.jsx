@@ -53,7 +53,7 @@ export default function DestinationDetailScreen() {
     navigate('/create-trip');
   };
 
-  const img = destination.image?.url || destination.image || 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80';
+  const img = destination.image?.url || destination.image;
 
   return (
     <AppLayout>
@@ -67,7 +67,11 @@ export default function DestinationDetailScreen() {
       </div>
 
       <div className="relative h-[45vh] min-h-[320px] rounded-3xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-slate-700/80 mb-6">
-        <img src={img} alt={destination.name} className="w-full h-full object-cover" />
+        {img ? (
+          <img src={img} alt={destination.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/25 via-secondary/15 to-accent/25" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
           <span className="inline-block bg-primary text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider mb-2">Featured Destination</span>

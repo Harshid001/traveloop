@@ -2,22 +2,33 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Bell, CheckCheck, Clock, PackageCheck, Trash2, WalletCards } from 'lucide-react';
+import { useGetNotificationsQuery, useMarkNotificationReadMutation } from '../services/apiSlice';
 import AppLayout from '../components/layout/AppLayout';
 
-const initialNotifications = [
-  { id: 1, type: 'trip', title: 'Europe Explorer starts soon', message: 'Review your itinerary and hotel notes before departure.', time: 'Today', read: false, icon: Clock },
-  { id: 2, type: 'packing', title: 'Packing reminder', message: 'Passport, charger, and medicine checklist still has unpacked items.', time: 'Yesterday', read: false, icon: PackageCheck },
-  { id: 3, type: 'budget', title: 'Budget alert', message: 'Food expenses are at 82 percent of your planned category budget.', time: 'May 20', read: true, icon: WalletCards },
-  { id: 4, type: 'saved', title: 'Saved trip update', message: 'Tokyo spring hotel placeholders are ready to connect to inventory.', time: 'May 18', read: true, icon: Bell },
-];
+const ICONS = {
+  trip: Clock,
+  packing: PackageCheck,
+  budget: WalletCards,
+  saved: Bell,
+};
+
+function iconFor(type) {
+  return ICONS[type] || Bell;
+}
 
 export default function NotificationsScreen() {
   const navigate = useNavigate();
-  const [items, setItems] = useState(initialNotifications);
-  const unread = useMemo(() => items.filter((item) => !item.read).length, [items]);
+  const { data: items = [], isLoading } = useGetNotificationsQuery();
+  const [markNotificationRead] = useMarkNotificationReadMutation();
+  const [cleared, setCleared] = useState([]);
+  const visible = (items || []).filter((item) => !cleared.includes(item.id));
+  const unread = useMemo(() => visible.filter((item) => !item.read).length, [visible]);
 
-  const markRead = (id) => setItems((current) => current.map((item) => (item.id === id ? { ...item, read: true } : item)));
-  const clearAll = () => setItems([]);
+  const markRead = (id) => {
+    markNotificationRead(id);
+  };
+
+  const clearAll = () => setCleared((current) => [...current, ...visible.map((item) => item.id)]);
 
   return (
     <AppLayout>
@@ -29,24 +40,26 @@ export default function NotificationsScreen() {
           </button>
           <div>
             <h1 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Notifications &amp; Alerts</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{unread} unread reminders</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{isLoading ? 'Loading...' : `${unread} unread reminders`}</p>
           </div>
         </div>
-        <button onClick={clearAll} className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-danger transition-colors" aria-label="Clear notifications">
-          <Trash2 size={16} /> Clear all
-        </button>
+        {visible.length > 0 && (
+          <button onClick={clearAll} className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-danger transition-colors" aria-label="Clear notifications">
+            <Trash2 size={16} /> Clear all
+          </button>
+        )}
       </div>
 
       <div className="space-y-3">
-        {items.length === 0 ? (
+        {visible.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 px-6 py-16 text-center">
             <Bell size={40} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
             <p className="font-poppins text-lg font-bold text-slate-800 dark:text-slate-200">All clear!</p>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Trip reminders, budget alerts, and packing nudges will appear here.</p>
           </div>
         ) : (
-          items.map((item, index) => {
-            const Icon = item.icon;
+          visible.map((item, index) => {
+            const Icon = iconFor(item.type);
             return (
               <motion.div
                 key={item.id}
@@ -68,11 +81,13 @@ export default function NotificationsScreen() {
                     {!item.read && <span className="h-2 w-2 rounded-full bg-primary" />}
                   </div>
                   <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{item.message}</p>
-                  <p className="mt-2 text-[10px] font-bold text-slate-400 dark:text-slate-500">{item.time}</p>
+                  <p className="mt-2 text-[10px] font-bold text-slate-400 dark:text-slate-500">{item.time || (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '')}</p>
                 </div>
-                <button onClick={() => markRead(item.id)} className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:text-primary transition-colors" aria-label={`Mark ${item.title} as read`}>
-                  <CheckCheck size={16} />
-                </button>
+                {!item.read && (
+                  <button onClick={() => markRead(item.id)} className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:text-primary transition-colors" aria-label={`Mark ${item.title} as read`}>
+                    <CheckCheck size={16} />
+                  </button>
+                )}
               </motion.div>
             );
           })
@@ -81,4 +96,3 @@ export default function NotificationsScreen() {
     </AppLayout>
   );
 }
-

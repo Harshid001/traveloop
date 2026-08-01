@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { optimizeImageUrl, srcSet, DEFAULT_TRAVEL_IMAGE } from '../imageUrl';
+import { optimizeImageUrl, srcSet } from '../imageUrl';
 
 describe('optimizeImageUrl', () => {
   it('returns undefined for falsy input', () => {
@@ -25,10 +25,6 @@ describe('optimizeImageUrl', () => {
   it('does not modify non-unsplash URLs', () => {
     const url = 'https://example.com/image.jpg';
     expect(optimizeImageUrl(url)).toBe(url);
-  });
-
-  it('DEFAULT_TRAVEL_IMAGE is a valid unsplash URL', () => {
-    expect(DEFAULT_TRAVEL_IMAGE).toContain('images.unsplash.com');
   });
 });
 

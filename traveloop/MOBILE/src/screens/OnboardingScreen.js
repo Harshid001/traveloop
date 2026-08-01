@@ -15,8 +15,8 @@ const slides = [
     image: 'https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=1200&q=80',
   },
   {
-    title: 'Book, budget, pack, and track everything',
-    body: 'Keep bookings, alerts, expenses, checklists, notes, and memories in one travel loop.',
+    title: 'Plan, budget, pack, and track everything',
+    body: 'Keep itineraries, alerts, expenses, checklists, notes, and memories in one travel loop.',
     image: 'https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=1200&q=80',
   },
 ];

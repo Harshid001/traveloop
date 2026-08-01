@@ -9,21 +9,21 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#4F46E5', // Indigo 600
-          light: '#6366F1',   // Indigo 500
-          dark: '#4338CA',    // Indigo 700
+          DEFAULT: '#6366F1', // Indigo 500
+          light: '#818CF8',   // Indigo 400
+          dark: '#4F46E5',    // Indigo 600
         },
         secondary: {
-          DEFAULT: '#7C3AED', // Purple 600
-          light: '#8B5CF6',   // Purple 500
-          dark: '#6D28D9',    // Purple 700
+          DEFAULT: '#8B5CF6', // Purple 500
+          light: '#A78BFA',   // Purple 400
+          dark: '#7C3AED',    // Purple 600
         },
         accent: {
           DEFAULT: '#06B6D4', // Cyan 500
           light: '#22D3EE',   // Cyan 400
           dark: '#0891B2',    // Cyan 600
         },
-        success: '#22C55E',
+        success: '#10B981',
         warning: '#F59E0B',
         danger: '#EF4444',
         surface: {
@@ -31,9 +31,9 @@ export default {
           50: '#F8FAFC',
           100: '#F1F5F9',
           200: '#E2E8F0',
-          dark: '#0F172A',
-          darkCard: '#1E293B',
-          darkHover: '#334155',
+          dark: '#0B0F17',
+          darkCard: '#131C2E',
+          darkHover: '#1E293B',
         },
         textDark: '#0F172A',
         textMuted: '#64748B',
@@ -44,11 +44,11 @@ export default {
         sans: ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 4px 20px rgba(0,0,0,0.04)',
-        'hover': '0 12px 40px rgba(79, 70, 229, 0.12)',
-        'glow': '0 0 25px rgba(79, 70, 229, 0.3)',
-        'card-dark': '0 10px 30px rgba(0,0,0,0.5)',
-        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+        'soft': '0 4px 20px -2px rgba(0,0,0,0.05), 0 2px 6px -1px rgba(0,0,0,0.02)',
+        'hover': '0 20px 30px -10px rgba(99, 102, 241, 0.18)',
+        'glow': '0 0 30px rgba(99, 102, 241, 0.35)',
+        'card-dark': '0 12px 36px rgba(0,0,0,0.6)',
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.12)',
       },
       animation: {
         'fade-in': 'fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',

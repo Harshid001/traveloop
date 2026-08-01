@@ -12,12 +12,26 @@ const EMPTY_STOP = { city: '', country: '', startDate: '', endDate: '', activiti
 
 export default function ItineraryBuilderScreen() {
   const navigate = useNavigate();
-  const [tripName, setTripName] = useState('European Adventure');
-  const [stops, setStops] = useState([
-    { city: 'Paris', country: 'France', startDate: '2026-07-01', endDate: '2026-07-03', activities: ['Eiffel Tower', 'Louvre Museum', 'Seine Cruise'], notes: 'Book skip-the-line tickets' },
-    { city: 'Rome', country: 'Italy', startDate: '2026-07-04', endDate: '2026-07-06', activities: ['Colosseum', 'Vatican City', 'Trevi Fountain'], notes: 'Try authentic pasta near Trastevere' },
-    { city: 'Barcelona', country: 'Spain', startDate: '2026-07-07', endDate: '2026-07-09', activities: ['Sagrada Familia', 'Park Güell', 'La Rambla Walk'], notes: '' },
-  ]);
+  const [tripName, setTripName] = useState('');
+  const [stops, setStops] = useState([{ ...EMPTY_STOP, activities: [''] }]);
+
+  const savePreview = () => {
+    try {
+      window.localStorage.setItem('traveloop.itinerary.preview', JSON.stringify({ tripName, stops }));
+    } catch (err) {
+      console.error('Failed to save itinerary preview:', err);
+    }
+    navigate('/itinerary-view');
+  };
+
+  const saveDraft = () => {
+    try {
+      window.localStorage.setItem('traveloop.itinerary.draft', JSON.stringify({ tripName, stops }));
+    } catch (err) {
+      console.error('Failed to save itinerary draft:', err);
+    }
+    navigate('/home');
+  };
 
   const addStop = () => setStops((p) => [...p, { ...EMPTY_STOP, activities: [''] }]);
   const removeStop = (i) => setStops((p) => p.filter((_, idx) => idx !== i));
@@ -72,11 +86,11 @@ export default function ItineraryBuilderScreen() {
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">AI Itinerary Builder</h1>
+            <h1 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Itinerary Builder</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">{stops.length} stops · {totalDays} total days</p>
           </div>
         </div>
-        <Button variant="primary" onClick={() => navigate('/itinerary-view')} className="text-xs px-5 py-2.5 shadow-md font-bold">
+        <Button variant="primary" onClick={savePreview} className="text-xs px-5 py-2.5 shadow-md font-bold">
           <Eye size={14} /> Preview Itinerary
         </Button>
       </div>
@@ -267,10 +281,10 @@ export default function ItineraryBuilderScreen() {
 
       {/* Bottom Actions */}
       <div className="flex flex-col gap-3 mt-8 pb-4 sm:flex-row">
-        <Button variant="secondary" onClick={() => navigate('/home')} className="flex-1 py-3 text-xs font-bold">
+        <Button variant="secondary" onClick={saveDraft} className="flex-1 py-3 text-xs font-bold">
           Save Draft
         </Button>
-        <Button variant="primary" onClick={() => navigate('/itinerary-view')} className="flex-1 py-3 text-xs font-bold shadow-lg">
+        <Button variant="primary" onClick={savePreview} className="flex-1 py-3 text-xs font-bold shadow-lg">
           <Eye size={14} /> Preview Full Itinerary
         </Button>
       </div>

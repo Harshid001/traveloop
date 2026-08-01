@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Bookmark, Globe, DollarSign, Plane } from 'lucide-react';
-import { useGetTopTripsQuery, useGetLatestTripsQuery } from '../services/apiSlice';
+import { useGetTopTripsQuery, useGetLatestTripsQuery, useGetDashboardSummaryQuery } from '../services/apiSlice';
 import AppLayout from '../components/layout/AppLayout';
 import { useAuth } from '../context/AuthContext';
 import HomeHeader from '../components/features/home/HomeHeader';
 import DashboardStats from '../components/features/home/DashboardStats';
 import TopDestinationsCarousel from '../components/features/home/TopDestinationsCarousel';
 import LatestTripsGrid from '../components/features/home/LatestTripsGrid';
-import useCounter from '../hooks/useCounter';
 import useSearch from '../hooks/useSearch';
 import useProfile from '../hooks/useProfile';
 import useLikedTrips from '../hooks/useLikedTrips';
 
-const defaultUser = { firstName: 'Henish', lastName: 'Patel', email: 'henish@example.com', mobile: '+91 98765 43210' };
+const defaultUser = { firstName: 'Traveler', lastName: '', email: '', mobile: '' };
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -22,9 +20,12 @@ export default function HomePage() {
   const [user, setUser] = useState(defaultUser);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const totalTrips = useCounter(12);
-  const budgetSpent = useCounter(18450);
-  const distanceTravelled = useCounter(34000);
+  const { data: dashboard, isLoading: dashboardLoading } = useGetDashboardSummaryQuery();
+
+  const totalTrips = dashboard?.totalTrips ?? 0;
+  const savedPlaces = dashboard?.savedPlaces ?? 0;
+  const totalSpent = dashboard?.budgetSummary?.totalSpent ?? 0;
+  const upcomingTrips = dashboard?.upcomingTrips ?? 0;
   const { likedTrips, toggleLike } = useLikedTrips();
 
   const { data: rawTopTrips, isLoading: topLoading, error: topError, refetch: refetchTop } = useGetTopTripsQuery();
@@ -58,23 +59,25 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!authUser) return;
-    const [firstName = 'Traveler', ...rest] = (authUser.name || defaultUser.firstName).split(' ');
+    const [firstName = 'Traveler', ...rest] = (authUser.name || '').split(' ');
     // eslint-disable-next-line
     setUser({
       firstName,
       lastName: rest.join(' '),
-      email: authUser.email || defaultUser.email,
-      mobile: authUser.phone || authUser.mobile || defaultUser.mobile,
+      email: authUser.email || '',
+      mobile: authUser.phone || authUser.mobile || '',
     });
   }, [authUser]);
+
+  const upcomingTrip = dashboard?.upcomingTrip ?? null;
 
   const firstLetter = user.firstName?.charAt(0)?.toUpperCase() || 'U';
 
   const stats = [
-    { label: 'Total Trips', value: totalTrips, icon: Plane, color: '#4F46E5', suffix: '', badge: '+2 this month' },
-    { label: 'Budget Spent', value: budgetSpent, icon: DollarSign, color: '#22C55E', suffix: '', prefix: '$', badge: '82% on track' },
-    { label: 'Distance Travelled', value: distanceTravelled, icon: Globe, color: '#06B6D4', suffix: ' km', format: true, badge: '12 countries' },
-    { label: 'Saved Destinations', value: 8, icon: Bookmark, color: '#7C3AED', suffix: '', badge: '4 wishlist' },
+    { label: 'Total Trips', value: totalTrips, icon: Plane, color: '#4F46E5', suffix: '', badge: `${upcomingTrips} upcoming` },
+    { label: 'Budget Spent', value: totalSpent, icon: DollarSign, color: '#22C55E', suffix: '', prefix: '$', format: true, badge: dashboardLoading ? 'Loading...' : 'from real budgets' },
+    { label: 'Saved Destinations', value: savedPlaces, icon: Bookmark, color: '#7C3AED', suffix: '', badge: 'bookmarked' },
+    { label: 'Upcoming Trips', value: upcomingTrips, icon: Globe, color: '#06B6D4', suffix: '', badge: 'planned' },
   ];
 
   return (
@@ -116,9 +119,7 @@ export default function HomePage() {
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-bold text-indigo-200 border border-white/15 mb-4">
-                <span>🌤️ Interlaken: 22°C Sunny</span>
-                <span className="opacity-40">|</span>
-                <span>✈️ Next trip in 14 days</span>
+                <span>✈️ {upcomingTrip ? `Next trip: ${upcomingTrip.title || upcomingTrip.destination || 'upcoming adventure'}` : `${totalTrips} trip${totalTrips === 1 ? '' : 's'} planned`}</span>
               </div>
               <h1 className="font-poppins text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
                 Welcome back, <span className="bg-gradient-to-r from-accent via-indigo-300 to-purple-300 bg-clip-text text-transparent">{user.firstName}</span>! ✈️
@@ -127,11 +128,11 @@ export default function HomePage() {
                 Ready for your next journey? Plan smart itineraries, track travel budgets, and discover handpicked world destinations.
               </p>
 
-              {/* AI Trip Planner Quick Search Bar */}
+              {/* Trip Planner Quick Search Bar */}
               <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/20 shadow-xl max-w-xl">
                 <input
                   type="text"
-                  placeholder="✨ Ask Traveloop AI: 'Create 5-day Japan itinerary'..."
+                  placeholder="✨ 'Create 5-day Japan itinerary'..."
                   className="w-full bg-transparent px-4 py-2.5 text-sm text-white placeholder-slate-400 outline-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') navigate('/itinerary-builder');
@@ -147,22 +148,27 @@ export default function HomePage() {
             </div>
 
             {/* Upcoming Trip Card Preview Widget for Desktop */}
-            <div className="hidden lg:block shrink-0 w-80 bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-white/20 shadow-2xl">
-              <div className="flex items-center justify-between text-xs font-bold text-indigo-200 mb-2 uppercase tracking-wider">
-                <span>Upcoming Adventure</span>
-                <span className="bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-400/30">Confirmed</span>
-              </div>
-              <h3 className="font-poppins text-lg font-bold text-white leading-snug">Tokyo &amp; Mt. Fuji Exploration</h3>
-              <p className="text-xs text-slate-300 mt-1">Jun 15 — Jun 28, 2026 (14 Days)</p>
+            {upcomingTrip && (
+              <div className="hidden lg:block shrink-0 w-80 bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-white/20 shadow-2xl">
+                <div className="flex items-center justify-between text-xs font-bold text-indigo-200 mb-2 uppercase tracking-wider">
+                  <span>Upcoming Adventure</span>
+                  <span className="bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-400/30">Planned</span>
+                </div>
+                <h3 className="font-poppins text-lg font-bold text-white leading-snug">{upcomingTrip.title || upcomingTrip.destination || 'Upcoming Trip'}</h3>
+                <p className="text-xs text-slate-300 mt-1">
+                  {upcomingTrip.startDate ? new Date(upcomingTrip.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+                  {upcomingTrip.endDate ? ` — ${new Date(upcomingTrip.endDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : ''}
+                  {upcomingTrip.days && ` (${upcomingTrip.days} Days)`}
+                </p>
 
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                <span className="text-slate-300">Pre-trip Packing</span>
-                <span className="font-bold text-white">8/10 items</span>
+                <button
+                  onClick={() => navigate(`/trip/${upcomingTrip._id}`)}
+                  className="mt-4 w-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-white/20 transition-all"
+                >
+                  View Trip →
+                </button>
               </div>
-              <div className="w-full bg-white/10 h-2 rounded-full mt-1.5 overflow-hidden">
-                <div className="bg-gradient-to-r from-emerald-400 to-teal-300 h-full w-[80%]" />
-              </div>
-            </div>
+            )}
           </div>
         </section>
 

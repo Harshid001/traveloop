@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upcoming Trip Reminder</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .trip-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; margin-top: 20px; }
+    .trip-title { font-size: 18px; font-weight: bold; color: #4F46E5; margin-bottom: 8px; }
+    .trip-meta { font-size: 14px; color: #6b7280; margin-bottom: 4px; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+    .footer { text-align: center; padding: 20px; color: #888; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Your trip is coming up! ✈️</h1>
+  </div>
+  <div class="content">
+    <p>Hi {{name}},</p>
+    <p>You have an upcoming trip. Here's a quick reminder to finish your planning:</p>
+    <div class="trip-card">
+      <div class="trip-title">{{tripTitle}}</div>
+      <div class="trip-meta">{{tripDates}}</div>
+      <div class="trip-meta">{{tripDestination}}</div>
+      <div class="trip-meta">Status: {{tripStatus}}</div>
+    </div>
+    <a href="{{tripUrl}}" class="button">Open My Trip</a>
+    <p style="margin-top: 30px;">Not done packing? Weather-aware packing lists are waiting in your trip.</p>
+    <p>Happy travels!</p>
+    <p>The Traveloop Team</p>
+  </div>
+  <div class="footer">
+    <p>&copy; 2026 Traveloop. All rights reserved.</p>
+    <p><a href="{{unsubscribeUrl}}">Unsubscribe</a></p>
+  </div>
+</body>
+</html>

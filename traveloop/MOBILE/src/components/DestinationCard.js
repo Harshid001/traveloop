@@ -19,11 +19,17 @@ export default function DestinationCard({ destination, onPress, onFavorite, isFa
       }, style]}
     >
       <View className="h-48 relative">
-        <Image
-          source={{ uri: destination.image || 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1' }}
-          className="w-full h-full"
-          resizeMode="cover"
-        />
+        {destination.image ? (
+          <Image
+            source={{ uri: destination.image }}
+            className="w-full h-full"
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="w-full h-full items-center justify-center bg-teal-50">
+            <Text className="text-5xl">🌍</Text>
+          </View>
+        )}
         
         {/* Favorite Button */}
         <TouchableOpacity 
@@ -38,11 +44,11 @@ export default function DestinationCard({ destination, onPress, onFavorite, isFa
         <View className="absolute bottom-4 left-4 right-4 flex-row justify-between">
           <View className="flex-row items-center bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full">
             <CloudSun size={14} color="#fff" />
-            <Text className="text-white text-xs font-semibold ml-1.5">{destination.weather || '24°C'}</Text>
+            <Text className="text-white text-xs font-semibold ml-1.5">{destination.weather || 'Weather'}</Text>
           </View>
           <View className="flex-row items-center bg-white/90 px-3 py-1.5 rounded-full">
             <Star size={14} color="#f59e0b" fill="#f59e0b" />
-            <Text className="text-slate-900 text-xs font-bold ml-1">{destination.rating || '4.5'}</Text>
+            <Text className="text-slate-900 text-xs font-bold ml-1">{destination.rating || '—'}</Text>
           </View>
         </View>
       </View>

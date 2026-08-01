@@ -3,7 +3,6 @@ import { Alert, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-
 import EmptyState from '../components/EmptyState';
 import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
-import { destinations } from '../constants/data';
 import { tripsApi } from '../services/api';
 import { addNotification, getTripScoped, setTripScoped } from '../services/appData';
 import { STORAGE_KEYS } from '../services/storage';
@@ -39,7 +38,7 @@ function generatedItems(trip) {
 }
 
 export default function PackingScreen({ navigation, route }) {
-  const trip = route.params?.trip || destinations[0];
+  const trip = route.params?.trip || {};
   const tripId = trip.id || trip._id || 'default';
   const [items, setItems] = useState(generatedItems(trip));
   const [text, setText] = useState('');

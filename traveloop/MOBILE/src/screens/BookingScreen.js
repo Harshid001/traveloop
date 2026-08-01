@@ -2,14 +2,13 @@ import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
-import { destinations } from '../constants/data';
 import { bookingsApi } from '../services/api';
 import { saveLocalBooking, saveLocalTrip } from '../services/appData';
 import { getBoolean, STORAGE_KEYS } from '../services/storage';
 import { validateBooking } from '../services/validators';
 
 export default function BookingScreen({ navigation, route }) {
-  const trip = route.params?.trip || destinations[0];
+  const trip = route.params?.trip || null;
   const [form, setForm] = useState({
     date: '',
     travelers: '2',
@@ -23,9 +22,26 @@ export default function BookingScreen({ navigation, route }) {
 
   useEffect(() => {
     getBoolean(STORAGE_KEYS.guestMode, false).then((isGuest) => {
-      if (isGuest) setStatus('Guest mode: booking request is saved locally until you sign in.');
+      if (isGuest) setStatus('Guest mode: your enquiry is saved locally on this device until you sign in.');
     });
   }, []);
+
+  if (!trip) {
+    return (
+      <View className="flex-1 bg-bg">
+        <Header title="Request call-back" onBack={() => navigation.goBack()} />
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-xl font-black text-dark text-center">No trip selected</Text>
+          <Text className="mt-2 text-base leading-6 text-slate-500 text-center">
+            Open a destination or trip from Explore to request a call-back for it.
+          </Text>
+          <View className="mt-6 w-full">
+            <PrimaryButton title="Back" onPress={() => navigation.goBack()} />
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -53,7 +69,7 @@ export default function BookingScreen({ navigation, route }) {
       try {
         await bookingsApi.createBooking(bookingPayload);
       } catch (err) {
-        setStatus(`Booking saved locally. Sync when online: ${err.message}`);
+        setStatus(`Enquiry saved locally. Sync when online: ${err.message}`);
       }
 
       await saveLocalBooking(bookingPayload);
@@ -69,7 +85,7 @@ export default function BookingScreen({ navigation, route }) {
         totalBudget: trip.price || 'Custom budget',
       });
       setSuccess(true);
-      setStatus('Booking request sent. Your trip is now available in My Trips.');
+      setStatus('Enquiry saved. No payment has been taken — we will contact you to confirm availability.');
     } finally {
       setLoading(false);
     }
@@ -77,7 +93,7 @@ export default function BookingScreen({ navigation, route }) {
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-bg" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Header title="Booking" subtitle={trip.title || trip.name} onBack={() => navigation.goBack()} />
+      <Header title="Request call-back" subtitle={trip.title || trip.name} onBack={() => navigation.goBack()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: 140 }}>
         <View className="rounded-3xl bg-white p-5">
           <Text className="text-xl font-black text-dark">{trip.title || trip.name}</Text>
@@ -86,10 +102,16 @@ export default function BookingScreen({ navigation, route }) {
             <Text className="font-bold text-primary">{trip.duration || 'Flexible'}</Text>
             <Text className="font-black text-primary">{trip.price || 'Custom'}</Text>
           </View>
+          <View className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <Text className="text-sm font-bold text-amber-700">This is an enquiry, not a booking</Text>
+            <Text className="mt-1 text-xs leading-5 text-amber-700/80">
+              No payment is taken and nothing is confirmed here. Your details are sent as a request — availability is confirmed only after we contact you.
+            </Text>
+          </View>
         </View>
 
         <View className="mt-6 rounded-3xl bg-white p-5">
-          <Text className="mb-4 text-xl font-black text-dark">Traveler details</Text>
+          <Text className="mb-4 text-xl font-black text-dark">Your details</Text>
           <Field label="Travel date" value={form.date} onChangeText={(value) => update('date', value)} placeholder="2026-06-25" />
           <Field label="Travelers" value={form.travelers} onChangeText={(value) => update('travelers', value)} keyboardType="number-pad" />
           <Field label="Phone" value={form.phone} onChangeText={(value) => update('phone', value)} placeholder="+91 98765 43210" keyboardType="phone-pad" />
@@ -111,7 +133,7 @@ export default function BookingScreen({ navigation, route }) {
         {success ? (
           <PrimaryButton title="View My Trips" onPress={() => navigation.navigate('MainTabs', { screen: 'MyTrips' })} />
         ) : (
-          <PrimaryButton title="Request booking" onPress={handleBooking} loading={loading} loadingText="Sending request" />
+          <PrimaryButton title="Request call-back" onPress={handleBooking} loading={loading} loadingText="Sending request" />
         )}
       </View>
     </KeyboardAvoidingView>

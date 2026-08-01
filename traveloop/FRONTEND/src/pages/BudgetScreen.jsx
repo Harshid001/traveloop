@@ -26,19 +26,14 @@ const categories = [
   { label: 'Emergency', icon: WalletCards, color: '#EF4444' },
 ];
 
-const initialExpenses = [
-  { id: 1, title: 'Paris hotel deposit', category: 'Hotels', amount: 120000, destination: 'Paris', date: '2026-06-21' },
-  { id: 2, title: 'Food tour booking', category: 'Food', amount: 50000, destination: 'Rome', date: '2026-06-22' },
-  { id: 3, title: 'Train tickets', category: 'Transport', amount: 30000, destination: 'Barcelona', date: '2026-06-24' },
-  { id: 4, title: 'Museum passes', category: 'Activities', amount: 45000, destination: 'Paris', date: '2026-06-26' },
-];
+const initialExpenses = [];
 
 const currencySymbol = { INR: '₹', USD: '$' };
 
 export default function BudgetScreen() {
   const navigate = useNavigate();
   const [currency, setCurrency] = useState('INR');
-  const [totalBudget, setTotalBudget] = useState(350000);
+  const [totalBudget, setTotalBudget] = useState(0);
   const [expenses, setExpenses] = useState(initialExpenses);
   const [entry, setEntry] = useState({ title: '', category: 'Food', amount: '', destination: '' });
   const [notice, setNotice] = useState('');
@@ -46,7 +41,7 @@ export default function BudgetScreen() {
 
   const spent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const remaining = totalBudget - spent;
-  const spentPct = Math.min(100, Math.round((spent / totalBudget) * 100));
+  const spentPct = totalBudget ? Math.min(100, Math.round((spent / totalBudget) * 100)) : 0;
 
   const categoryTotals = useMemo(() => categories.map((category) => {
     const amount = expenses.filter((expense) => expense.category === category.label).reduce((sum, expense) => sum + expense.amount, 0);

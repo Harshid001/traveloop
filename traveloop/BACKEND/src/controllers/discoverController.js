@@ -1,10 +1,7 @@
 const {
   normalizeDestinationCard,
   enrichWithImages,
-  SEASONAL_SUGGESTIONS,
   getSeason,
-  BUDGET_DESTINATIONS,
-  CATEGORY_DESTINATIONS,
   getWeatherSuggestions,
   amadeusService,
   googleMapsService,
@@ -12,6 +9,13 @@ const {
   getChatbotResponse,
 } = require('../services/discoverService');
 const { cache, CACHE_TTL } = require('../services/cacheService');
+const destinationStore = require('../services/destinationStore');
+
+const fromStore = async (docs, cacheKey, ttl) => {
+  const destinations = await enrichWithImages(docs.map(destinationStore.toCard));
+  await cache.set(cacheKey, destinations, ttl);
+  return destinations;
+};
 
 const getTrending = async (req, res) => {
   try {
@@ -19,21 +23,13 @@ const getTrending = async (req, res) => {
     const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
-    let destinations = [];
-    try {
-      const raw = await amadeusService.getTrendingDestinations();
-      destinations = (raw || []).map((d) => normalizeDestinationCard(d, 'amadeus'));
-    } catch (err) {
-      console.error('Amadeus trending destinations failed, using curated fallback:', err.message);
-      destinations = [
-        { name: 'Bali', country: 'Indonesia', type: 'island', tags: ['trending', 'culture', 'beach'], popularity: 92 },
-        { name: 'Tokyo', country: 'Japan', type: 'city', tags: ['trending', 'food', 'tech'], popularity: 95 },
-        { name: 'Barcelona', country: 'Spain', type: 'city', tags: ['trending', 'architecture', 'beach'], popularity: 88 },
-        { name: 'Santorini', country: 'Greece', type: 'island', tags: ['trending', 'romance', 'sunsets'], popularity: 90 },
-        { name: 'Dubai', country: 'UAE', type: 'luxury', tags: ['trending', 'shopping', 'modern'], popularity: 87 },
-        { name: 'Iceland', country: 'Iceland', type: 'adventure', tags: ['trending', 'nature', 'northern-lights'], popularity: 85 },
-      ].map((d) => normalizeDestinationCard(d, 'curated'));
+    if (await destinationStore.isSeeded()) {
+      const destinations = await fromStore(await destinationStore.getTrending(10), cacheKey, CACHE_TTL.TRENDING);
+      return res.status(200).json({ success: true, data: destinations });
     }
+
+    const raw = await amadeusService.getTrendingDestinations();
+    let destinations = (raw || []).map((d) => normalizeDestinationCard(d, 'amadeus'));
 
     destinations = await enrichWithImages(destinations);
     await cache.set(cacheKey, destinations, CACHE_TTL.TRENDING);
@@ -55,22 +51,19 @@ const getSeasonal = async (req, res) => {
     const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
-    const seasonData = SEASONAL_SUGGESTIONS[season] || SEASONAL_SUGGESTIONS.summer;
-    let destinations = seasonData.destinations.map((d) => normalizeDestinationCard(d, 'curated'));
-
-    try {
-      const amadeusData = await amadeusService.getTrendingDestinations();
-      if (amadeusData && amadeusData.length) {
-        const extra = amadeusData
-          .slice(0, 3)
-          .map((d) => normalizeDestinationCard({ ...d, bestSeason: season }, 'amadeus'));
-        destinations = [...destinations, ...extra];
-      }
-    } catch (err) {
-      console.error('Amadeus enrichment for seasonal destinations failed:', err.message);
+    if (await destinationStore.isSeeded()) {
+      const destinations = await fromStore(
+        (await destinationStore.getTrending(10)).map((d) => ({ ...d, _season: season })),
+        cacheKey,
+        CACHE_TTL.SEASONAL
+      );
+      return res.status(200).json({ success: true, data: destinations, meta: { season, month: parseInt(month, 10), hemisphere } });
     }
 
-    destinations = await enrichWithImages(destinations);
+    const raw = await amadeusService.getTrendingDestinations();
+    const destinations = await enrichWithImages(
+      (raw || []).map((d) => normalizeDestinationCard({ ...d, bestSeason: season }, 'amadeus'))
+    );
     await cache.set(cacheKey, destinations, CACHE_TTL.SEASONAL);
 
     res.status(200).json({ success: true, data: destinations, meta: { season, month: parseInt(month, 10), hemisphere } });
@@ -89,17 +82,21 @@ const getBudgetDestinations = async (req, res) => {
     const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
-    let destinations = BUDGET_DESTINATIONS
-      .filter((d) => d.estimatedBudget.min >= min && d.estimatedBudget.max <= max)
-      .map((d) => normalizeDestinationCard(d, 'curated'));
-
-    if (!destinations.length) {
-      destinations = BUDGET_DESTINATIONS
-        .sort((a, b) => a.estimatedBudget.min - b.estimatedBudget.min)
-        .map((d) => normalizeDestinationCard(d, 'curated'));
+    if (await destinationStore.isSeeded()) {
+      const destinations = await fromStore(await destinationStore.getByBudget(min, max, 10), cacheKey, CACHE_TTL.TRENDING);
+      return res.status(200).json({ success: true, data: destinations });
     }
 
-    destinations = await enrichWithImages(destinations);
+    const raw = await amadeusService.getTrendingDestinations();
+    const destinations = await enrichWithImages(
+      (raw || [])
+        .filter((d) => {
+          const price = parseFloat(d.price);
+          if (Number.isNaN(price)) return false;
+          return price >= min && price <= max;
+        })
+        .map((d) => normalizeDestinationCard(d, 'amadeus'))
+    );
     await cache.set(cacheKey, destinations, CACHE_TTL.TRENDING);
 
     res.status(200).json({ success: true, data: destinations });
@@ -118,31 +115,37 @@ const getCategoryDestinations = async (req, res) => {
     const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
-    let destinations = (CATEGORY_DESTINATIONS[normalizedCategory] || [])
-      .map((d) => normalizeDestinationCard(d, 'curated'));
-
-    try {
-      const googleResults = await googleMapsService.searchPlaces(`${normalizedCategory} travel destinations`);
-      if (googleResults && googleResults.length) {
-        const extra = googleResults.slice(0, 3).map((place) =>
-          normalizeDestinationCard({
-            id: place.place_id,
-            name: place.name,
-            city: place.name,
-            country: place.formatted_address || '',
-            type: normalizedCategory,
-            rating: place.rating,
-            reviewCount: place.user_ratings_total,
-            coordinates: place.geometry?.location || {},
-          }, 'google')
-        );
-        destinations = [...destinations, ...extra];
+    if (await destinationStore.isSeeded()) {
+      const destinations = await fromStore(
+        await destinationStore.getByCategory(normalizedCategory, 6),
+        cacheKey,
+        CACHE_TTL.TRENDING
+      );
+      if (!destinations.length) {
+        return res.status(200).json({
+          success: true,
+          data: [],
+          message: `No destinations found for category "${category}". Try: beach, mountain, city, cultural, historical, island, adventure, luxury.`,
+        });
       }
-    } catch (err) {
-      console.error('Google Places category search failed:', err.message);
+      return res.status(200).json({ success: true, data: destinations });
     }
 
-    destinations = await enrichWithImages(destinations);
+    const googleResults = await googleMapsService.searchPlaces(`${normalizedCategory} travel destinations`);
+    const destinations = await enrichWithImages(
+      (googleResults || []).slice(0, 6).map((place) =>
+        normalizeDestinationCard({
+          id: place.place_id,
+          name: place.name,
+          city: place.name,
+          country: place.formatted_address || '',
+          type: normalizedCategory,
+          rating: place.rating,
+          reviewCount: place.user_ratings_total,
+          coordinates: place.geometry?.location || {},
+        }, 'google')
+      )
+    );
     await cache.set(cacheKey, destinations, CACHE_TTL.TRENDING);
 
     if (!destinations.length) {
@@ -209,37 +212,15 @@ const getRecommendedDestinations = async (req, res) => {
     const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
-    let trending = [];
-    try {
-      const raw = await amadeusService.getTrendingDestinations();
-      trending = (raw || []).slice(0, 3).map((d) => normalizeDestinationCard(d, 'amadeus'));
-    } catch (err) {
-      console.error('Amadeus recommended destinations failed:', err.message);
-      trending = [
-        normalizeDestinationCard({ name: 'Bali', country: 'Indonesia', type: 'island', tags: ['trending'], popularity: 92 }, 'curated'),
-        normalizeDestinationCard({ name: 'Tokyo', country: 'Japan', type: 'city', tags: ['trending'], popularity: 95 }, 'curated'),
-      ];
+    if (await destinationStore.isSeeded()) {
+      const destinations = await fromStore(await destinationStore.getRecommended(6), cacheKey, CACHE_TTL.TRENDING);
+      return res.status(200).json({ success: true, data: destinations });
     }
 
-    const month = new Date().getMonth() + 1;
-    const season = getSeason(month, 'northern');
-    const seasonData = SEASONAL_SUGGESTIONS[season] || SEASONAL_SUGGESTIONS.summer;
-    const seasonal = seasonData.destinations.slice(0, 3).map((d) => normalizeDestinationCard(d, 'curated'));
-
-    const categories = Object.keys(CATEGORY_DESTINATIONS);
-    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-    const categoryPicks = (CATEGORY_DESTINATIONS[randomCategory] || [])
-      .slice(0, 2)
-      .map((d) => normalizeDestinationCard(d, 'curated'));
-
-    const seen = new Set();
-    let destinations = [...trending, ...seasonal, ...categoryPicks].filter((d) => {
-      if (seen.has(d.name)) return false;
-      seen.add(d.name);
-      return true;
-    });
-
-    destinations = await enrichWithImages(destinations);
+    const raw = await amadeusService.getTrendingDestinations();
+    const destinations = await enrichWithImages(
+      (raw || []).slice(0, 6).map((d) => normalizeDestinationCard(d, 'amadeus'))
+    );
     await cache.set(cacheKey, destinations, CACHE_TTL.TRENDING);
 
     res.status(200).json({ success: true, data: destinations });
@@ -261,20 +242,29 @@ const getWeatherBasedDestinations = async (req, res) => {
     const cached = await cache.get(cacheKey);
     if (cached) return res.json({ success: true, data: cached, cached: true });
 
-    let currentWeather = { temp: 20, condition: 'clear' };
-    try {
-      currentWeather = await weatherService.getCurrentWeather(lat, lng);
-    } catch (err) {
-      console.error('Weather service failed, using default weather:', err.message);
-    }
-
+    const currentWeather = await weatherService.getCurrentWeather(lat, lng);
     const suggestions = getWeatherSuggestions(currentWeather);
     const allTypes = [suggestions.suggestType, ...(suggestions.alternatives || [])];
 
     let destinations = [];
     for (const type of allTypes) {
-      const picks = (CATEGORY_DESTINATIONS[type] || []).map((d) => normalizeDestinationCard(d, 'curated'));
-      destinations = [...destinations, ...picks];
+      try {
+        const googleResults = await googleMapsService.searchPlaces(`${type} travel destinations`);
+        destinations = [...destinations, ...(googleResults || []).map((place) =>
+          normalizeDestinationCard({
+            id: place.place_id,
+            name: place.name,
+            city: place.name,
+            country: place.formatted_address || '',
+            type,
+            rating: place.rating,
+            reviewCount: place.user_ratings_total,
+            coordinates: place.geometry?.location || {},
+          }, 'google')
+        )];
+      } catch (err) {
+        console.error(`Google Places ${type} search failed:`, err.message);
+      }
     }
 
     const seen = new Set();
@@ -348,42 +338,63 @@ Example output: {"category":"beach","season":"winter","budget":"low","specific_d
 
     let destinations = [];
 
-    if (filters.category && CATEGORY_DESTINATIONS[filters.category]) {
-      destinations = CATEGORY_DESTINATIONS[filters.category].map((d) => normalizeDestinationCard(d, 'curated'));
-    }
-
-    if (filters.season && SEASONAL_SUGGESTIONS[filters.season]) {
-      const seasonDests = SEASONAL_SUGGESTIONS[filters.season].destinations
-        .map((d) => normalizeDestinationCard(d, 'curated'));
-      destinations = destinations.length
-        ? destinations.filter((d) => seasonDests.some((sd) => sd.type === d.type) || true)
-        : seasonDests;
-    }
-
-    if (filters.budget) {
-      const budgetRanges = { low: { min: 0, max: 50 }, medium: { min: 50, max: 150 }, high: { min: 150, max: 99999 } };
-      const range = budgetRanges[filters.budget] || budgetRanges.medium;
-      const budgetDests = BUDGET_DESTINATIONS
-        .filter((d) => d.estimatedBudget.min >= range.min && d.estimatedBudget.max <= range.max)
-        .map((d) => normalizeDestinationCard(d, 'curated'));
-      if (budgetDests.length) {
-        destinations = destinations.length ? [...destinations, ...budgetDests] : budgetDests;
+    if (filters.specific_destination) {
+      try {
+        const googleResults = await googleMapsService.searchPlaces(filters.specific_destination);
+        destinations.push(...(googleResults || []).slice(0, 3).map((place) =>
+          normalizeDestinationCard({
+            id: place.place_id,
+            name: place.name,
+            city: place.name,
+            country: place.formatted_address || '',
+            type: filters.category || 'city',
+            rating: place.rating,
+            reviewCount: place.user_ratings_total,
+            coordinates: place.geometry?.location || {},
+            tags: ['search-result'],
+          }, 'google')
+        ));
+      } catch (err) {
+        console.error('Google Places specific destination search failed:', err.message);
       }
     }
 
-    if (filters.specific_destination) {
-      destinations.unshift(
-        normalizeDestinationCard({ name: filters.specific_destination, type: filters.category || 'city', tags: ['search-result'] }, 'curated')
-      );
+    if (filters.category) {
+      try {
+        const googleResults = await googleMapsService.searchPlaces(`${filters.category} travel destinations`);
+        destinations.push(...(googleResults || []).map((place) =>
+          normalizeDestinationCard({
+            id: place.place_id,
+            name: place.name,
+            city: place.name,
+            country: place.formatted_address || '',
+            type: filters.category,
+            rating: place.rating,
+            reviewCount: place.user_ratings_total,
+            coordinates: place.geometry?.location || {},
+          }, 'google')
+        ));
+      } catch (err) {
+        console.error(`Google Places ${filters.category} search failed:`, err.message);
+      }
     }
 
-    if (!destinations.length) {
-      destinations = [
-        { name: 'Bali', country: 'Indonesia', type: 'island', tags: ['popular'], popularity: 92 },
-        { name: 'Paris', country: 'France', type: 'city', tags: ['popular'], popularity: 96 },
-        { name: 'Tokyo', country: 'Japan', type: 'city', tags: ['popular'], popularity: 95 },
-        { name: 'Barcelona', country: 'Spain', type: 'city', tags: ['popular'], popularity: 88 },
-      ].map((d) => normalizeDestinationCard(d, 'curated'));
+    if (filters.budget) {
+      try {
+        const raw = await amadeusService.getTrendingDestinations();
+        const budgetRanges = { low: { min: 0, max: 50 }, medium: { min: 50, max: 150 }, high: { min: 150, max: 99999 } };
+        const range = budgetRanges[filters.budget] || budgetRanges.medium;
+        const budgetDests = (raw || [])
+          .filter((d) => {
+            const price = parseFloat(d.price);
+            if (Number.isNaN(price)) return false;
+            return price >= range.min && price <= range.max;
+          })
+          .map((d) => normalizeDestinationCard(d, 'amadeus'));
+        destinations.push(...budgetDests);
+      } catch (err) {
+        console.error('Amadeus budget search failed:', err.message);
+      }
     }
 
     const seen = new Set();

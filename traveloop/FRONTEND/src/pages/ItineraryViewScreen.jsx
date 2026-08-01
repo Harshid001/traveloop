@@ -1,46 +1,91 @@
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, MapPin, Calendar, Clock, Star, DollarSign, Globe,
+  ArrowLeft, MapPin, Calendar, Clock, Globe, Star,
   Plane, Share2, PenLine, Printer,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import AppLayout from '../components/layout/AppLayout';
 
-const itinerary = {
-  name: 'European Adventure',
-  totalDays: 9,
-  totalBudget: '₹3,50,000',
-  destinations: 3,
-  stops: [
-    { city: 'Paris', country: 'France', dates: 'Jul 1 – Jul 3', days: [
-      { day: 1, label: 'Arrival in Paris', desc: 'Check into hotel near Champs-Élysées, evening walk along Seine', icon: Plane },
-      { day: 2, label: 'Eiffel Tower + Louvre', desc: 'Morning visit to Eiffel Tower, afternoon at Louvre Museum', icon: Star },
-      { day: 3, label: 'Seine Cruise & Departure', desc: 'Morning cruise, afternoon travel to Rome', icon: Globe },
-    ]},
-    { city: 'Rome', country: 'Italy', dates: 'Jul 4 – Jul 6', days: [
-      { day: 4, label: 'Arrive in Rome', desc: 'Settle in near Trastevere, explore local cuisine', icon: Plane },
-      { day: 5, label: 'Colosseum + Vatican', desc: 'Full day heritage tour: Colosseum, Forum, Vatican City', icon: Star },
-      { day: 6, label: 'Trevi Fountain & Depart', desc: 'Visit Trevi Fountain, Spanish Steps, train to Barcelona', icon: Globe },
-    ]},
-    { city: 'Barcelona', country: 'Spain', dates: 'Jul 7 – Jul 9', days: [
-      { day: 7, label: 'Arrive in Barcelona', desc: 'Check in, walk along La Rambla, tapas dinner', icon: Plane },
-      { day: 8, label: 'Sagrada Familia + Park Güell', desc: 'Gaudí masterpieces tour, beach evening', icon: Star },
-      { day: 9, label: 'Final Day & Return', desc: 'Morning at Barceloneta Beach, airport transfer', icon: Globe },
-    ]},
-  ],
-};
+const STORAGE_KEY = 'traveloop.itinerary.preview';
 
-const budgetSplit = [
-  { label: 'Hotels', amount: '₹1,20,000', pct: 34 },
-  { label: 'Flights', amount: '₹95,000', pct: 27 },
-  { label: 'Activities', amount: '₹55,000', pct: 16 },
-  { label: 'Food', amount: '₹50,000', pct: 14 },
-  { label: 'Transport', amount: '₹30,000', pct: 9 },
-];
+function readPreview() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    console.error('Failed to read itinerary preview:', err);
+    return null;
+  }
+}
+
+function getDays(startDate, endDate) {
+  if (!startDate || !endDate) return [];
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const days = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    days.push(new Date(d));
+  }
+  return days;
+}
 
 export default function ItineraryViewScreen() {
   const navigate = useNavigate();
+  const [preview] = useState(readPreview);
+
+  const stops = (preview?.stops || []).map((stop) => {
+    const days = getDays(stop.startDate, stop.endDate);
+    return {
+      city: stop.city || 'Untitled stop',
+      country: stop.country || '',
+      dates: days.length
+        ? `${days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${days[days.length - 1].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        : 'Dates not set',
+      days: days.map((d, di) => ({
+        day: di + 1,
+        date: d,
+        label: di === 0
+          ? `Arrival in ${stop.city || 'city'}`
+          : di === days.length - 1
+            ? 'Departure'
+            : (stop.activities?.[di - 1] || 'Free day'),
+        icon: di === 0 ? Plane : di === days.length - 1 ? Globe : Star,
+      })),
+    };
+  });
+
+  const totalDays = stops.reduce((sum, s) => sum + s.days.length, 0);
+  const name = preview?.tripName || 'Untitled Itinerary';
+
+  if (!stops.length) {
+    return (
+      <AppLayout>
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+          <button
+            aria-label="Go back"
+            onClick={() => navigate(-1)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 transition-colors"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h1 className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Itinerary Preview</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Complete day-by-day travel roadmap</p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-10 text-center shadow-soft">
+          <MapPin size={36} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+          <h2 className="font-poppins text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">No itinerary yet</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Build your trip in the Itinerary Builder and preview it here.</p>
+          <Button variant="primary" onClick={() => navigate('/itinerary-builder')} className="text-xs px-6 py-2.5 font-bold shadow-md">
+            <PenLine size={14} /> Open Itinerary Builder
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -67,36 +112,31 @@ export default function ItineraryViewScreen() {
         animate={{ opacity: 1, y: 0 }}
         className="bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 rounded-3xl p-6 sm:p-8 text-white mb-8 shadow-xl border border-slate-700/60"
       >
-        <h2 className="break-words font-poppins text-2xl sm:text-3xl font-extrabold mb-1">{itinerary.name}</h2>
-        <p className="text-indigo-200 text-xs sm:text-sm mb-6">Your curated Traveloop AI itinerary</p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        <h2 className="break-words font-poppins text-2xl sm:text-3xl font-extrabold mb-1">{name}</h2>
+        <p className="text-indigo-200 text-xs sm:text-sm mb-6">Your curated Traveloop itinerary</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 text-center">
             <Clock size={20} className="mx-auto mb-1 text-indigo-300" />
-            <p className="font-poppins text-2xl font-extrabold">{itinerary.totalDays}</p>
+            <p className="font-poppins text-2xl font-extrabold">{totalDays}</p>
             <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Days</p>
           </div>
           <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 text-center">
             <MapPin size={20} className="mx-auto mb-1 text-accent" />
-            <p className="font-poppins text-2xl font-extrabold">{itinerary.destinations}</p>
+            <p className="font-poppins text-2xl font-extrabold">{stops.length}</p>
             <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Cities</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 text-center">
-            <DollarSign size={20} className="mx-auto mb-1 text-emerald-400" />
-            <p className="break-words font-poppins text-xl font-extrabold">{itinerary.totalBudget}</p>
-            <p className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">Est. Budget</p>
           </div>
         </div>
       </motion.div>
 
       {/* Route Overview */}
       <div className="no-scrollbar flex snap-x items-center gap-2 mb-8 overflow-x-auto pb-2">
-        {itinerary.stops.map((s, i) => (
+        {stops.map((s, i) => (
           <div key={i} className="flex shrink-0 snap-start items-center gap-2">
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700/80 px-4 py-2.5 shadow-soft">
               <p className="text-xs font-extrabold text-slate-900 dark:text-slate-100">{s.city}</p>
               <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{s.dates}</p>
             </div>
-            {i < itinerary.stops.length - 1 && (
+            {i < stops.length - 1 && (
               <div className="flex items-center gap-1 text-slate-300 dark:text-slate-600">
                 <div className="w-6 h-px bg-slate-200 dark:bg-slate-700" />
                 <Plane size={14} className="text-primary" />
@@ -111,7 +151,7 @@ export default function ItineraryViewScreen() {
       <div className="relative">
         <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-secondary to-accent" />
 
-        {itinerary.stops.map((stop, si) => (
+        {stops.map((stop, si) => (
           <div key={si} className="mb-8">
             <motion.div
               initial={{ opacity: 0, x: -16 }}
@@ -123,7 +163,7 @@ export default function ItineraryViewScreen() {
                 <MapPin size={8} className="text-white" />
               </div>
               <div>
-                <h3 className="font-poppins text-lg font-extrabold text-slate-900 dark:text-slate-100">{stop.city}, {stop.country}</h3>
+                <h3 className="font-poppins text-lg font-extrabold text-slate-900 dark:text-slate-100">{stop.city}{stop.country ? `, ${stop.country}` : ''}</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium"><Calendar size={12} /> {stop.dates}</p>
               </div>
             </motion.div>
@@ -148,7 +188,11 @@ export default function ItineraryViewScreen() {
                         <span className="text-[10px] font-extrabold text-primary dark:text-primary-light bg-primary/10 dark:bg-primary/20 rounded-md px-2 py-0.5">Day {day.day}</span>
                         <h4 className="min-w-0 text-sm font-bold text-slate-900 dark:text-slate-100 sm:truncate">{day.label}</h4>
                       </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-normal">{day.desc}</p>
+                      {day.date && (
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+                          {day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -157,33 +201,6 @@ export default function ItineraryViewScreen() {
           </div>
         ))}
       </div>
-
-      {/* Budget Summary */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-6 shadow-soft mt-4 mb-8"
-      >
-        <h3 className="font-poppins text-base font-bold text-slate-900 dark:text-slate-100 mb-4">Budget Breakdown Summary</h3>
-        <div className="space-y-3">
-          {budgetSplit.map((b, i) => (
-            <div key={i} className="grid grid-cols-[5rem_1fr] items-center gap-2 sm:flex sm:gap-3">
-              <span className="text-xs font-bold text-slate-600 dark:text-slate-400 w-20 shrink-0">{b.label}</span>
-              <div className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${b.pct}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: i * 0.1 }}
-                  className="h-full rounded-full bg-gradient-to-r from-primary via-secondary to-accent"
-                />
-              </div>
-              <span className="col-span-2 text-right text-xs font-extrabold text-slate-900 dark:text-slate-100 sm:col-span-1 sm:w-24 sm:shrink-0">{b.amount}</span>
-            </div>
-          ))}
-        </div>
-      </motion.div>
 
       {/* Actions */}
       <div className="flex flex-col gap-3 pb-8 print:hidden sm:flex-row">
@@ -195,9 +212,9 @@ export default function ItineraryViewScreen() {
           className="flex-1 py-3 text-xs font-bold shadow-lg"
           onClick={async () => {
             try {
-              const shareUrl = `${window.location.origin}/public-trip/${itinerary.shareId || ''}`;
+              const shareUrl = `${window.location.origin}/itinerary-builder`;
               if (navigator.share) {
-                await navigator.share({ title: itinerary.name, url: shareUrl });
+                await navigator.share({ title: name, url: shareUrl });
               } else {
                 await navigator.clipboard.writeText(shareUrl);
                 alert('Share link copied to clipboard');
@@ -213,4 +230,3 @@ export default function ItineraryViewScreen() {
     </AppLayout>
   );
 }
-

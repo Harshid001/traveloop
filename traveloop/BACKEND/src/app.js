@@ -40,8 +40,8 @@ const discoverRoutes = require('./routes/discoverRoutes');
 const mapsRoutes = require('./routes/mapsRoutes');
 const imagesRoutes = require('./routes/imagesRoutes');
 const recommendationsRoutes = require('./routes/recommendationsRoutes');
+const exportRoutes = require('./routes/exportRoutes');
 const csrfRoutes = require('./routes/csrfRoutes');
-
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
@@ -156,6 +156,7 @@ app.use('/api/wishlist', protect, wishlistRoutes);
 app.use('/api/bookings', protect, bookingRoutes);
 app.use('/api/profile', protect, profileRoutes);
 app.use('/api/dashboard', protect, dashboardRoutes);
+app.use('/api/export', protect, exportRoutes);
 app.use('/api/notifications', protect, notificationRoutes);
 app.use('/api/search', protect, searchRoutes);
 

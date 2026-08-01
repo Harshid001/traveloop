@@ -5,14 +5,13 @@ import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
 import WeatherBadge from '../components/WeatherBadge';
 import ImageGallery from '../components/ImageGallery';
-import { FALLBACK_DESTINATIONS } from '../constants/data';
 import { wishlistApi, imagesApi, placesApi } from '../services/api';
 import { saveWishlistItem } from '../services/appData';
 import { toDestinationCard } from '../services/destinationAdapter';
 import { getBoolean, STORAGE_KEYS } from '../services/storage';
 
 export default function TripDetailsScreen({ navigation, route }) {
-  const trip = toDestinationCard(route.params?.trip || FALLBACK_DESTINATIONS[0]);
+  const trip = route.params?.trip ? toDestinationCard(route.params.trip) : null;
   const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +21,7 @@ export default function TripDetailsScreen({ navigation, route }) {
   // Enrich with live images and place details on focus
   useFocusEffect(
     useCallback(() => {
+      if (!trip) return undefined;
       let mounted = true;
       const enrich = async () => {
         // Fetch Unsplash images for this destination
@@ -49,8 +49,25 @@ export default function TripDetailsScreen({ navigation, route }) {
       };
       enrich();
       return () => { mounted = false; };
-    }, [trip.name, trip.placeId]),
+    }, [trip?.name, trip?.placeId]),
   );
+
+  if (!trip) {
+    return (
+      <View className="flex-1 bg-bg">
+        <Header title="Trip details" onBack={() => navigation.goBack()} />
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-xl font-black text-dark text-center">No trip selected</Text>
+          <Text className="mt-2 text-base leading-6 text-slate-500 text-center">
+            Open a destination from Explore to see its details.
+          </Text>
+          <View className="mt-6 w-full">
+            <PrimaryButton title="Back" onPress={() => navigation.goBack()} />
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   const saveTrip = async () => {
     setMessage('');
@@ -79,7 +96,7 @@ export default function TripDetailsScreen({ navigation, route }) {
 
   // Merged activities: trip-defined + place-derived
   const activities = trip.activities || [];
-  const facilities = trip.facilities || ['Hotel', 'Meals', 'Guide', 'Transfers'];
+  const facilities = trip.facilities || [];
 
   return (
     <View className="flex-1 bg-bg">
@@ -90,8 +107,12 @@ export default function TripDetailsScreen({ navigation, route }) {
           <View className="mx-5 overflow-hidden rounded-3xl">
             <ImageGallery images={gallery} height={280} />
           </View>
-        ) : (
+        ) : trip.image ? (
           <Image source={{ uri: trip.image }} className="mx-5 h-72 rounded-3xl" resizeMode="cover" />
+        ) : (
+          <View className="mx-5 h-72 items-center justify-center rounded-3xl bg-teal-50">
+            <Text className="text-5xl">🌍</Text>
+          </View>
         )}
 
         <View className="px-5 pt-6">
@@ -100,14 +121,16 @@ export default function TripDetailsScreen({ navigation, route }) {
               <Text className="text-3xl font-black text-dark">{trip.title || trip.name}</Text>
               <Text className="mt-2 text-base font-semibold text-slate-500">{trip.location}</Text>
             </View>
-            <View className="items-end">
-              <View className="rounded-full bg-teal-50 px-4 py-2">
-                <Text className="font-black text-primary">⭐ {trip.rating}</Text>
+            {trip.rating != null && (
+              <View className="items-end">
+                <View className="rounded-full bg-teal-50 px-4 py-2">
+                  <Text className="font-black text-primary">⭐ {trip.rating}</Text>
+                </View>
+                {trip.reviewCount > 0 && (
+                  <Text className="mt-1 text-xs text-muted">{trip.reviewCount} reviews</Text>
+                )}
               </View>
-              {trip.reviewCount > 0 && (
-                <Text className="mt-1 text-xs text-muted">{trip.reviewCount} reviews</Text>
-              )}
-            </View>
+            )}
           </View>
 
           {/* Weather badge */}
@@ -131,14 +154,14 @@ export default function TripDetailsScreen({ navigation, route }) {
           {message ? <Text className="mt-4 rounded-2xl bg-teal-50 px-4 py-3 text-sm font-semibold text-primary">{message}</Text> : null}
 
           <View className="mt-6 flex-row">
-            <InfoBox label="Duration" value={trip.duration || 'Flexible'} />
+            <InfoBox label="Duration" value={trip.duration || 'N/A'} />
             <View className="w-3" />
-            <InfoBox label="Budget" value={trip.price || 'TBD'} />
+            <InfoBox label="Budget" value={trip.price || 'N/A'} />
           </View>
           <View className="mt-3 flex-row">
-            <InfoBox label="Best season" value={trip.bestTime || 'Year-round'} />
+            <InfoBox label="Best season" value={trip.bestTime || 'N/A'} />
             <View className="w-3" />
-            <InfoBox label="Travel style" value={trip.type || 'Mixed'} />
+            <InfoBox label="Travel style" value={trip.type || 'N/A'} />
           </View>
 
           {/* Place info from Google */}
@@ -150,17 +173,25 @@ export default function TripDetailsScreen({ navigation, route }) {
             </View>
           )}
 
-          <Text className="mt-8 text-xl font-black text-dark">Overview</Text>
-          <Text className="mt-3 text-base leading-7 text-slate-600">{trip.description || 'Discover this beautiful destination and create unforgettable memories.'}</Text>
+          {trip.description ? (
+            <>
+              <Text className="mt-8 text-xl font-black text-dark">Overview</Text>
+              <Text className="mt-3 text-base leading-7 text-slate-600">{trip.description}</Text>
+            </>
+          ) : null}
 
-          <Text className="mt-8 text-xl font-black text-dark">Included</Text>
-          <View className="mt-3 flex-row flex-wrap">
-            {facilities.map((item) => (
-              <View key={item} className="mb-3 mr-3 rounded-full bg-white px-4 py-2">
-                <Text className="text-sm font-bold text-dark">{item}</Text>
+          {facilities.length > 0 && (
+            <>
+              <Text className="mt-8 text-xl font-black text-dark">Included</Text>
+              <View className="mt-3 flex-row flex-wrap">
+                {facilities.map((item) => (
+                  <View key={item} className="mb-3 mr-3 rounded-full bg-white px-4 py-2">
+                    <Text className="text-sm font-bold text-dark">{item}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </>
+          )}
 
           {activities.length > 0 && (
             <>
@@ -190,7 +221,7 @@ export default function TripDetailsScreen({ navigation, route }) {
           <PrimaryButton title="Itinerary" onPress={() => navigation.navigate('ItineraryBuilder', { trip })} className="flex-1" />
         </View>
         <View className="flex-row">
-          <PrimaryButton title="Booking" onPress={() => navigation.navigate('Booking', { trip })} variant="light" className="mr-3 flex-1" />
+          <PrimaryButton title="Request Call-back" onPress={() => navigation.navigate('Booking', { trip })} variant="light" className="mr-3 flex-1" />
           <PrimaryButton title="Ask Assistant" onPress={() => navigation.navigate('Chatbot', { trip, prompt: `Help me plan ${trip.title}` })} variant="dark" className="flex-1" />
         </View>
       </View>

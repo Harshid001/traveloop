@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Send, Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
+import { Send, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 
@@ -10,16 +10,11 @@ export default function LoginScreen() {
   const location = useLocation();
   const { login, googleLogin, authNotice } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('demo@traveloop.com');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
-
-  const fillDemoCredentials = () => {
-    setEmail('demo@traveloop.com');
-    setPassword('Password123!');
-  };
 
   const redirectAfterAuth = (user) => {
     const target = location.state?.from?.pathname || (user.profileComplete ? '/home' : '/complete-profile');
@@ -102,22 +97,6 @@ export default function LoginScreen() {
           <div className="text-center lg:text-left mb-6">
             <h1 className="font-poppins text-3xl font-extrabold text-slate-900 dark:text-slate-100 mb-1.5">Welcome Back</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm">Sign in to access your travel dashboard</p>
-          </div>
-
-          <div className="mb-6 p-4 rounded-2xl bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 flex items-center justify-between">
-            <div className="text-xs">
-              <span className="font-bold text-primary dark:text-primary-light block flex items-center gap-1">
-                <Sparkles size={13} /> Demo Credentials
-              </span>
-              <span className="text-slate-600 dark:text-slate-300 font-mono">demo@traveloop.com / Password123!</span>
-            </div>
-            <button
-              type="button"
-              onClick={fillDemoCredentials}
-              className="text-xs bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-xl font-bold transition-colors shrink-0 shadow-sm"
-            >
-              Fill Demo
-            </button>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">

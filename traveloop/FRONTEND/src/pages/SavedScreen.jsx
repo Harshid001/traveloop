@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Bookmark, Heart, MapPin, Search, Sparkles } from 'lucide-react';
 import { useGetSavedQuery } from '../services/apiSlice';
-import { FALLBACK_DESTINATIONS as destinations } from '../constants/fallback';
 import AppLayout from '../components/layout/AppLayout';
 
 const tabs = ['Destinations', 'Trips', 'Activities', 'Hotels'];
@@ -26,20 +25,7 @@ export default function SavedScreen() {
     tab: 'Destinations',
   }));
 
-  const items = useMemo(() => [
-    ...savedDestinations,
-    ...destinations.slice(0, 3).flatMap((d) => (d.activities || []).slice(0, 1).map((a) => ({
-      id: `activity-${d.id}-${a.name}`,
-      title: a.name,
-      subtitle: d.name,
-      image: a.image,
-      price: `$${a.cost}`,
-      meta: a.category,
-      to: `/destinations/${d.id}`,
-      tab: 'Activities',
-    }))),
-    { id: 'hotel-1', title: 'Boutique hotel placeholder', subtitle: 'Paris', image: destinations[0]?.image, price: 'Sync soon', meta: 'Hotels', to: '/explore', tab: 'Hotels' },
-  ], [savedDestinations]);
+  const items = useMemo(() => savedDestinations, [savedDestinations]);
 
   const filtered = useMemo(() => {
     return items.filter(

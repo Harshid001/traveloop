@@ -5,7 +5,7 @@ const { successResponse, errorResponse } = require('../utils/apiResponse');
 
 const getBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.find({ user: req.user._id }).sort({ createdAt: -1 });
-  successResponse(res, 200, 'Bookings fetched successfully', bookings);
+  successResponse(res, 200, 'Enquiries fetched successfully', bookings);
 });
 
 const createBooking = asyncHandler(async (req, res) => {
@@ -24,11 +24,11 @@ const createBooking = asyncHandler(async (req, res) => {
   await Notification.create({
     user: req.user._id,
     type: 'booking',
-    title: 'Booking request sent',
-    message: `${booking.tripTitle} booking request is now being tracked.`,
+    title: 'Enquiry request sent',
+    message: `${booking.tripTitle} enquiry is now being tracked. No payment has been taken — availability is confirmed after we contact you.`,
   });
 
-  successResponse(res, 201, 'Booking request created successfully', booking);
+  successResponse(res, 201, 'Enquiry request created successfully — no payment taken, availability to be confirmed', booking);
 });
 
 const updateBookingStatus = asyncHandler(async (req, res) => {

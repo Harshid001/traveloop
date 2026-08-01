@@ -1,8 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Star, Clock, MapPin, ChevronLeft, ChevronRight, Sparkles, ArrowRight, Heart } from 'lucide-react';
+import { Star, Clock, MapPin, ChevronLeft, ChevronRight, Sparkles, ArrowRight, Heart, Compass } from 'lucide-react';
 import SkeletonCard from "../../ui/SkeletonCard";
 import ErrorBanner from "../../ui/ErrorBanner";
-import { FEATURED_TOP_TRIPS } from "../../../constants/fallback";
 
 /**
  * Enhanced Desktop & Mobile Carousel displaying top featured destinations.
@@ -18,8 +17,7 @@ export default function TopDestinationsCarousel({
   likedTrips = {},
   toggleLike = () => {}
 }) {
-  // Use backend topTrips if present, otherwise fallback to rich FEATURED_TOP_TRIPS
-  const displayTrips = (Array.isArray(topTrips) && topTrips.length > 0) ? topTrips : FEATURED_TOP_TRIPS;
+  const displayTrips = Array.isArray(topTrips) ? topTrips : [];
 
   const handlePrev = (e) => {
     e.stopPropagation();
@@ -43,6 +41,16 @@ export default function TopDestinationsCarousel({
     return (
       <div className="mb-10">
         <ErrorBanner error={topError} refetch={refetchTop} />
+      </div>
+    );
+  }
+
+  if (displayTrips.length === 0) {
+    return (
+      <div className="mb-10 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 py-16 text-center">
+        <Compass size={40} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+        <p className="font-poppins text-lg font-bold text-slate-800 dark:text-slate-200">No featured destinations yet</p>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Top destinations will appear here once available.</p>
       </div>
     );
   }
@@ -151,10 +159,10 @@ export default function TopDestinationsCarousel({
                     </span>
                   )}
                   <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-amber-300 text-xs font-bold rounded-full px-3.5 py-1 border border-white/20 shadow-sm">
-                    <Star size={13} className="fill-amber-400 text-amber-400" /> {activeTrip.rating || 4.9}
+                    <Star size={13} className="fill-amber-400 text-amber-400" /> {activeTrip.rating ?? 'N/A'}
                   </span>
                   <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-white text-xs font-semibold rounded-full px-3.5 py-1 border border-white/20 shadow-sm">
-                    <Clock size={13} /> {activeTrip.duration || '7 Days'}
+                    <Clock size={13} /> {activeTrip.duration || '—'}
                   </span>
                 </div>
 

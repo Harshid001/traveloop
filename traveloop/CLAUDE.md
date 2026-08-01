@@ -61,7 +61,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Backend (Node.js / Express)** – located under `BACKEND/`.
   - **API entry point**: `src/app.js` sets up the Express server, middleware stack, and mounts route modules.
   - **Routes**: Files in `src/routes/` expose REST endpoints for authentication, trips, notifications, etc.
-  - **Services**: Business logic lives in `src/services/` (e.g., `emailService.js`, `mockTravelService.js`).
+  - **Services**: Business logic lives in `src/services/` (e.g., `emailService.js`, `amadeusService.js`, `weatherService.js`).
   - **Data models**: Mongoose schemas are defined in `src/models/` (`User.js`, `Trip.js`). Unique constraints are preferred over manual indexing.
   - **Configuration**: `src/config/env.js` loads environment variables; `API_BASE_URL` can be overridden via a `.env` file.
 

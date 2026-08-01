@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Clock, ChevronRight, Star, MapPin, Compass, Flame } from 'lucide-react';
+import { Heart, Clock, ChevronRight, Star, MapPin, Compass, Flame, Plane } from 'lucide-react';
 import SkeletonCard from "../../ui/SkeletonCard";
 import ErrorBanner from "../../ui/ErrorBanner";
-import { FEATURED_LATEST_TRIPS } from "../../../constants/fallback";
 
 const CATEGORIES = ['All', 'Popular', 'Beach', 'Mountain', 'Cultural', 'Luxury'];
 
@@ -21,8 +20,7 @@ export default function LatestTripsGrid({
 }) {
   const [activeCategory, setActiveCategory] = useState('All');
 
-  // Use backend trips if present, fallback to FEATURED_LATEST_TRIPS
-  const rawTrips = (Array.isArray(latestTrips) && latestTrips.length > 0) ? latestTrips : FEATURED_LATEST_TRIPS;
+  const rawTrips = Array.isArray(latestTrips) ? latestTrips : [];
 
   // Filter based on activeCategory
   const filteredTrips = rawTrips.filter((trip) => {
@@ -76,6 +74,12 @@ export default function LatestTripsGrid({
         </div>
       ) : latestError && rawTrips.length === 0 ? (
         <ErrorBanner error={latestError} refetch={refetchLatest} />
+      ) : rawTrips.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 py-16 text-center">
+          <Plane size={40} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
+          <p className="font-poppins text-lg font-bold text-slate-800 dark:text-slate-200">No featured trips yet</p>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Published trips will appear here once available.</p>
+        </div>
       ) : (
         <motion.div
           layout
@@ -139,7 +143,7 @@ export default function LatestTripsGrid({
                       {trip.title}
                     </h3>
                     <span className="shrink-0 inline-flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 rounded-full px-2.5 py-0.5 border border-amber-200 dark:border-amber-800/60">
-                      <Star size={12} className="fill-amber-500 text-amber-500" /> {trip.rating || 4.8}
+                      <Star size={12} className="fill-amber-500 text-amber-500" /> {trip.rating ?? 'N/A'}
                     </span>
                   </div>
 
@@ -155,7 +159,7 @@ export default function LatestTripsGrid({
                   <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700/80 mt-auto">
                     <span className="text-slate-500 dark:text-slate-400 text-xs font-semibold flex items-center gap-1.5">
                       <Clock size={14} className="text-slate-400" />
-                      {trip.duration || '5 Days'}
+                      {trip.duration || '—'}
                     </span>
                     <span className="text-primary dark:text-primary-light text-xs sm:text-sm font-extrabold inline-flex items-center gap-1 group/btn">
                       <span>View Details</span>

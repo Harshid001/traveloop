@@ -3,7 +3,7 @@ export const slides = [
     {
         id: 1,
         title: 'Create Your Perfect Journey',
-        description: 'Plan multi-city trips with smart itineraries, flexible schedules, and AI-powered recommendations tailored just for you.',
+        description: 'Plan multi-city trips with smart itineraries, flexible schedules, and tailored recommendations for the way you travel.',
         image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80',
         icon: (
             <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -28,15 +28,13 @@ export const slides = [
     },
     {
         id: 3,
-        title: 'Share Trips With Friends',
-        description: 'Collaborate on itineraries, share travel memories, and plan group adventures together in one place.',
+        title: 'Capture Every Memory',
+        description: 'Keep a trip journal, save your favorite places, and export your trip data anytime — everything stays yours.',
         image: 'https://images.unsplash.com/photo-1539635278303-d4002c07eae3?auto=format&fit=crop&w=800&q=80',
         icon: (
             <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
             </svg>
         ),
     },

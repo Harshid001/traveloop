@@ -7,40 +7,8 @@ import { toDestinationCard } from '../services/destinationAdapter';
 import { getJson, setJson, STORAGE_KEYS } from '../services/storage';
 
 const historyKey = 'traveloop.chat.history';
-const welcome = { id: 'welcome', role: 'assistant', text: 'Hi, I can help you decide, plan, budget, pack, book, and move between Traveloop tools.' };
+const welcome = { id: 'welcome', role: 'assistant', text: 'Hi, I can help you decide, plan, budget, pack, and move between Traveloop tools.' };
 const suggestions = ['Suggest a trip', 'Plan 3-day itinerary', 'Budget travel ideas', 'Packing checklist', 'Find attractions nearby', 'Weather at destination'];
-
-function offlineReply(message, trip) {
-  const body = message.toLowerCase();
-  if (body.includes('packing')) {
-    return {
-      text: 'A packing list works best when it is tied to a trip, duration, and travel style. I can open Packing with your current trip context.',
-      actions: [{ label: 'Open Packing', route: 'Packing', params: { trip } }],
-    };
-  }
-  if (body.includes('budget')) {
-    return {
-      text: 'Start with the total trip budget, then track hotels, food, transport, activities, shopping, and emergency spend by category.',
-      actions: [{ label: 'Open Budget', route: 'Budget', params: { trip } }],
-    };
-  }
-  if (body.includes('itinerary') || body.includes('plan')) {
-    return {
-      text: 'A useful itinerary should be day-wise: date, time slots, stops, notes, and estimated costs. I can open the builder for this trip.',
-      actions: [{ label: 'Create Itinerary', route: 'ItineraryBuilder', params: { trip } }],
-    };
-  }
-  if (body.includes('hotel') || body.includes('book')) {
-    return {
-      text: 'For booking, choose a trip first, then submit travelers, date, phone, pickup city, and special notes.',
-      actions: [{ label: 'Request Booking', route: 'Booking', params: { trip } }],
-    };
-  }
-  return {
-    text: 'Try comparing destinations in Explore, saving the best options, then creating a trip so budget, packing, and journal all stay connected.',
-    actions: [{ label: 'Explore Destinations', route: 'Explore' }],
-  };
-}
 
 export default function ChatbotScreen({ navigation, route }) {
   const routeTrip = route.params?.trip || null;
@@ -111,12 +79,10 @@ export default function ChatbotScreen({ navigation, route }) {
         suggestions: response.suggestions || [],
       }]);
     } catch (err) {
-      const fallback = offlineReply(body, activeTrip);
       setMessages((current) => [...current, {
         id: `a-${Date.now()}`,
         role: 'assistant',
-        text: `${fallback.text}\n\nOffline note: ${err.message}`,
-        actions: fallback.actions,
+        text: `The travel assistant is unavailable right now. Please try again later.`,
       }]);
     } finally {
       setLoading(false);

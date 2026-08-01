@@ -10,7 +10,7 @@
   }
   
   body {
-    @apply antialiased text-slate-900 bg-[#F8FAFC] dark:bg-[#0F172A] dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-300;
+    @apply antialiased text-slate-900 bg-surface-50 dark:bg-surface-dark dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-300;
     line-height: 1.5;
   }
 
@@ -48,12 +48,22 @@
   *:focus-visible {
     @apply outline-none ring-2 ring-primary/60 dark:ring-primary/80 ring-offset-2;
   }
+
+  /* Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
   /* Reusable structural patterns */
   .page-shell {
-    @apply flex-1 flex flex-col w-full max-w-[1440px] mx-auto bg-[#F8FAFC] dark:bg-[#0F172A] transition-colors duration-300;
+    @apply flex-1 flex flex-col w-full max-w-[1440px] mx-auto bg-surface-50 dark:bg-surface-dark pb-20 md:pb-8 transition-colors duration-300;
   }
 
   .section-container {
@@ -62,11 +72,11 @@
 
   /* Reusable UI patterns */
   .input-field {
-    @apply w-full bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700
-           rounded-xl py-3 px-4 text-sm text-slate-900 dark:text-slate-100
+    @apply w-full bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800
+           rounded-2xl py-3 px-4 text-xs font-medium text-slate-900 dark:text-slate-100
            placeholder-slate-400 dark:placeholder-slate-500 outline-none
-           focus:border-primary focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/40
-           transition-all duration-200 shadow-sm hover:border-slate-300 dark:hover:border-slate-600;
+           focus:border-primary focus:ring-2 focus:ring-primary/25 dark:focus:ring-primary/40
+           transition-all duration-200 shadow-sm hover:border-slate-300 dark:hover:border-slate-700;
   }
 
   .tap-target {
@@ -75,27 +85,27 @@
 
   /* Card base styles */
   .card {
-    @apply bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80
-           overflow-hidden transition-all duration-300 hover:border-slate-300 dark:hover:border-slate-600;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    @apply bg-white dark:bg-surface-darkCard rounded-3xl border border-slate-200/80 dark:border-slate-800/80
+           overflow-hidden transition-all duration-300 hover:border-primary/30 dark:hover:border-primary/40;
+    box-shadow: 0 4px 25px -4px rgba(0,0,0,0.04);
   }
   .dark .card {
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 14px 40px -10px rgba(0,0,0,0.65);
   }
   .card:hover {
-    box-shadow: 0 12px 40px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 16px 45px -10px rgba(99, 102, 241, 0.15);
   }
 
   .glass-card {
-    @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/60 rounded-2xl p-6;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/60 dark:border-slate-800/60 rounded-3xl p-6;
+    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.06);
   }
   .dark .glass-card {
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.55);
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 dark:hover:border-primary/60;
+    @apply transition-all duration-300 hover:-translate-y-1.5 hover:shadow-hover hover:border-primary/40 dark:hover:border-primary/60;
   }
 }
 
@@ -111,8 +121,30 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  .safe-top {
-    padding-top: max(1rem, env(safe-area-inset-top));
-  }
 }
+
+/* Leaflet Custom Popup & Tile Container Styling */
+.leaflet-container {
+  background: #0B0F17 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  border-radius: 1.25rem !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.25) !important;
+  padding: 4px !important;
+}
+.dark .leaflet-popup-content-wrapper {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(30, 41, 59, 0.8) !important;
+}
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+.dark .leaflet-popup-tip {
+  background: rgba(15, 23, 42, 0.95) !important;
+}
+
 

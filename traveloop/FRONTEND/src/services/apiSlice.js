@@ -14,7 +14,7 @@ const dynamicBaseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: dynamicBaseQuery,
-  tagTypes: ['Trip', 'Destination', 'Itinerary', 'Journal', 'Notification', 'Profile', 'Saved', 'Wishlist'],
+  tagTypes: ['Trip', 'Destination', 'Itinerary', 'Journal', 'Notification', 'Profile', 'Saved'],
   endpoints: (builder) => ({
     getTopTrips: builder.query({
       query: () => '/trips?limit=10',
@@ -69,6 +69,10 @@ export const apiSlice = createApi({
       query: (params) => `/discover/seasonal?${new URLSearchParams(params || {}).toString()}`,
       transformResponse: (res) => res?.data ?? res,
     }),
+    getPersonalizedRecommendations: builder.query({
+      query: () => '/recommendations/personalized',
+      transformResponse: (res) => res?.data ?? res,
+    }),
     getItineraries: builder.query({
       query: (tripId) => `/itineraries/${tripId}`,
       transformResponse: (res) => res?.data ?? res,
@@ -112,7 +116,12 @@ export const apiSlice = createApi({
     getWishlist: builder.query({
       query: () => '/wishlist',
       transformResponse: (res) => res?.data ?? res,
-      providesTags: ['Wishlist'],
+      providesTags: ['Saved'],
+    }),
+    getDashboardSummary: builder.query({
+      query: () => '/dashboard/summary',
+      transformResponse: (res) => res?.data ?? res,
+      providesTags: ['Trip', 'Saved', 'Budget', 'Journal'],
     }),
     getProfile: builder.query({
       query: () => '/profile',
@@ -143,6 +152,7 @@ export const {
   useGetDestinationQuery,
   useGetExploreQuery,
   useGetSeasonalQuery,
+  useGetPersonalizedRecommendationsQuery,
   useGetItinerariesQuery,
   useCreateItineraryMutation,
   useGetJournalsQuery,
@@ -152,6 +162,7 @@ export const {
   useGetSavedQuery,
   useSaveItemMutation,
   useGetWishlistQuery,
+  useGetDashboardSummaryQuery,
   useGetProfileQuery,
   useUpdateProfileMutation,
   useSearchDestinationsQuery,

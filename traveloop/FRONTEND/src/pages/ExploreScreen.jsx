@@ -13,8 +13,9 @@ import {
   SlidersHorizontal,
   Star,
 } from 'lucide-react';
-import { useGetDestinationsQuery } from '../services/apiSlice';
+import { useGetDestinationsQuery, useGetPersonalizedRecommendationsQuery } from '../services/apiSlice';
 import AppLayout from '../components/layout/AppLayout';
+import InteractiveDestinationMap from '../components/features/map/InteractiveDestinationMap';
 
 const CATS = ['All', 'Sightseeing', 'Adventure', 'Beach', 'Food Tour', 'Shopping', 'Nightlife', 'Wellness', 'Family', 'Honeymoon', 'Budget Friendly'];
 const SORTS = ['Popular', 'Highest rated', 'Low budget', 'High budget', 'Nearby'];
@@ -31,6 +32,11 @@ function categoryMatches(destination, category) {
 export default function ExploreScreen() {
   const navigate = useNavigate();
   const { data: rawDestinations, isLoading: destsLoading } = useGetDestinationsQuery();
+  const { data: rawRecommendations, isLoading: recsLoading } = useGetPersonalizedRecommendationsQuery();
+  const recommendations = useMemo(
+    () => (Array.isArray(rawRecommendations) ? rawRecommendations : (Array.isArray(rawRecommendations?.data) ? rawRecommendations.data : [])).slice(0, 6),
+    [rawRecommendations]
+  );
   const destinations = useMemo(
     () => (Array.isArray(rawDestinations) ? rawDestinations : (Array.isArray(rawDestinations?.data) ? rawDestinations.data : [])),
     [rawDestinations]
@@ -47,7 +53,7 @@ export default function ExploreScreen() {
     const text = query.trim().toLowerCase();
     const list = destinations.filter((d) => {
       const matchSearch = !text ||
-        `${d.name} ${d.country} ${d.description} ${d.activities.map((a) => `${a.name} ${a.category}`).join(' ')}`.toLowerCase().includes(text);
+        `${d.name} ${d.country} ${d.description} ${(d.activities || []).map((a) => `${a.name} ${a.category}`).join(' ')}`.toLowerCase().includes(text);
       return matchSearch && categoryMatches(d, category);
     });
 
@@ -113,6 +119,45 @@ export default function ExploreScreen() {
         </div>
       </div>
 
+      {/* Personalized Recommendations */}
+      {!recsLoading && recommendations.length > 0 && (
+        <section className="mb-8">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-poppins text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Star size={15} className="text-primary" /> For You
+            </h2>
+            <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">Based on your interests &amp; searches</span>
+          </div>
+          <div className="no-scrollbar flex snap-x gap-4 overflow-x-auto pb-2">
+            {recommendations.map((rec) => {
+              const imageUrl = typeof rec.image === 'object' && rec.image ? (rec.image.url || '') : rec.image;
+              return (
+                <button
+                  key={rec.id || rec.name}
+                  onClick={() => navigate(`/destinations/${rec.id}`)}
+                  className="group relative w-52 shrink-0 snap-start overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-hover text-left"
+                >
+                  <div className="relative h-32 overflow-hidden bg-slate-100 dark:bg-slate-900">
+                    <img src={imageUrl} alt={rec.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent" />
+                    <span className="absolute right-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-amber-600 shadow-sm">
+                      <Star size={9} className="fill-amber-500 text-amber-500" /> {rec.rating}
+                    </span>
+                  </div>
+                  <div className="p-3">
+                    <h3 className="truncate font-poppins text-sm font-bold text-slate-900 dark:text-slate-100">{rec.name}</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{rec.country}</p>
+                    {rec.estimatedBudget?.mid && (
+                      <p className="mt-1 text-[11px] font-bold text-primary">${rec.estimatedBudget.mid.toLocaleString()} est.</p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Search & Sort Bar */}
       <section className="mb-6 space-y-3">
         <div className="grid gap-3 lg:grid-cols-[1fr_13rem]">
@@ -157,22 +202,8 @@ export default function ExploreScreen() {
 
       {/* Map View */}
       {view === 'map' && (
-        <section className="mb-6 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md">
-          <div className="relative h-[22rem] bg-gradient-to-br from-indigo-50 via-slate-100 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-            <div className="absolute left-5 top-5 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-100 shadow-sm backdrop-blur-md">
-              <Layers size={16} className="mb-1 text-primary" /> Map Explorer
-            </div>
-            {filtered.slice(0, 8).map((d, index) => (
-              <button
-                key={d.id}
-                onClick={() => navigate(`/destinations/${d.id}`)}
-                className="absolute rounded-full bg-primary px-3 py-2 text-xs font-bold text-white shadow-md transition-transform hover:scale-110"
-                style={{ left: `${12 + (index * 11) % 74}%`, top: `${24 + (index * 17) % 55}%` }}
-              >
-                {d.name}
-              </button>
-            ))}
-          </div>
+        <section className="mb-6">
+          <InteractiveDestinationMap searchQuery={query} activeCategory={category} />
         </section>
       )}
 
@@ -206,21 +237,21 @@ export default function ExploreScreen() {
                   <Heart size={15} className={liked[d.id] ? 'fill-danger text-danger' : 'text-slate-400 dark:text-slate-500'} />
                 </button>
                 <span className="absolute left-3 top-3 rounded-full bg-primary/95 text-white px-3 py-1 text-xs font-extrabold shadow-sm backdrop-blur-sm border border-white/20">
-                  ${d.budgetEstimate.toLocaleString()}
+                  {d.budgetEstimate ? `$${d.budgetEstimate.toLocaleString()}` : ''}
                 </span>
               </div>
               <div className="p-4">
                 <div className="mb-1 flex items-start justify-between gap-2">
                   <h2 className="font-poppins text-base font-bold text-slate-900 dark:text-slate-100 transition-colors group-hover:text-primary dark:group-hover:text-primary-light">{d.name}</h2>
                   <span className="inline-flex items-center gap-0.5 text-xs font-bold text-amber-600 dark:text-amber-400">
-                    <Star size={11} className="fill-amber-500 text-amber-500" /> {d.rating}
+                    <Star size={11} className="fill-amber-500 text-amber-500" /> {d.rating ?? 'N/A'}
                   </span>
                 </div>
                 <p className="mb-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"><MapPin size={11} className="text-primary" />{d.country}</p>
                 <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{d.description}</p>
                 <div className="flex flex-wrap gap-1">
-                  {d.activities.slice(0, 3).map((a) => (
-                    <span key={a.name} className="rounded-full bg-primary/10 dark:bg-primary/20 px-2.5 py-0.5 text-[10px] font-bold text-primary dark:text-primary-light">{a.category}</span>
+                  {(d.activities || []).slice(0, 3).map((a) => (
+                    <span key={a.name} className="rounded-full bg-primary/10 dark:bg-primary/20 px-2.5 py-0.5 text-[10px] font-bold text-primary dark:text-primary-light">{a.category || ''}</span>
                   ))}
                 </div>
               </div>

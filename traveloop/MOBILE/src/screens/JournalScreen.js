@@ -4,7 +4,6 @@ import EmptyState from '../components/EmptyState';
 import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
 import SearchBar from '../components/SearchBar';
-import { destinations } from '../constants/data';
 import { journalApi } from '../services/api';
 import { getJson, setJson, STORAGE_KEYS } from '../services/storage';
 
@@ -166,7 +165,7 @@ export default function JournalScreen({ navigation, route }) {
             {notice ? <Text className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-600">{notice}</Text> : null}
             <FlatList
               horizontal
-              data={trips.length > 1 ? trips : ['All', trip?.title || trip?.name || destinations[0].name]}
+              data={trips.length > 1 ? trips : ['All', trip?.title || trip?.name || 'Trip']}
               keyExtractor={(item) => item}
               showsHorizontalScrollIndicator={false}
               className="mt-4"

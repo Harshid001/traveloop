@@ -3,39 +3,65 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Camera, Mail, Phone, MapPin, Calendar, Globe, Plane,
-  Heart, Star, Save, PenLine,
+  Heart, Star, Save, PenLine, Download,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import AppLayout from '../components/layout/AppLayout';
+import { useGetDashboardSummaryQuery } from '../services/apiSlice';
+import { useAuth } from '../context/AuthContext';
 
 const initialUser = {
-  firstName: 'Henish', lastName: 'Patel', email: 'henish@example.com',
-  mobile: '+91 98765 43210', location: 'Ahmedabad, India', dob: '2000-05-15',
+  firstName: '', lastName: '', email: '',
+  mobile: '', location: '', dob: '',
 };
-
-const stats = [
-  { label: 'Trips Taken', value: '12', icon: Plane, color: '#4F46E5' },
-  { label: 'Countries', value: '5', icon: Globe, color: '#06B6D4' },
-  { label: 'Saved Trips', value: '8', icon: Heart, color: '#7C3AED' },
-  { label: 'Reviews', value: '15', icon: Star, color: '#F59E0B' },
-];
-
-const favDestinations = [
-  { name: 'Bali', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=200&q=80' },
-  { name: 'Tokyo', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=200&q=80' },
-  { name: 'Paris', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=200&q=80' },
-  { name: 'Dubai', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=200&q=80' },
-];
 
 export default function ProfileScreen() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(initialUser);
+  const { user: authUser } = useAuth();
+  const [user, setUser] = useState({
+    ...initialUser,
+    firstName: authUser?.name?.split(' ')[0] || '',
+    lastName: authUser?.name?.split(' ').slice(1).join(' ') || '',
+    email: authUser?.email || '',
+    mobile: authUser?.phone || authUser?.mobile || '',
+  });
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(user);
+  const [exporting, setExporting] = useState(false);
+
+  const { data: dashboard } = useGetDashboardSummaryQuery();
 
   const firstLetter = user.firstName?.charAt(0)?.toUpperCase() || 'U';
 
   const saveProfile = () => { setUser(form); setEditing(false); };
+
+  const stats = [
+    { label: 'Trips Taken', value: String(dashboard?.totalTrips ?? 0), icon: Plane, color: '#4F46E5' },
+    { label: 'Upcoming Trips', value: String(dashboard?.upcomingTrips ?? 0), icon: Globe, color: '#06B6D4' },
+    { label: 'Saved Destinations', value: String(dashboard?.savedPlaces ?? 0), icon: Heart, color: '#7C3AED' },
+    { label: 'Journal Entries', value: String(dashboard?.journalEntries ?? 0), icon: Star, color: '#F59E0B' },
+  ];
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const response = await fetch('/api/export', { credentials: 'include' });
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `traveloop-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <AppLayout>
@@ -55,6 +81,24 @@ export default function ProfileScreen() {
       </div>
 
       <div className="space-y-6">
+        {/* Export Data Card */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Download size={20} />
+            </div>
+            <div>
+              <h3 className="font-poppins text-sm font-bold text-slate-900 dark:text-slate-100">Your data, yours</h3>
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                Download all your trips, itineraries, budgets, journals, and saved places as JSON.
+              </p>
+            </div>
+          </div>
+          <Button variant="secondary" onClick={handleExport} disabled={exporting} className="shrink-0 px-5 py-2.5 text-xs font-bold">
+            {exporting ? 'Preparing...' : 'Export My Data'}
+          </Button>
+        </motion.div>
         {/* Profile Card */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-soft overflow-hidden">
@@ -126,20 +170,6 @@ export default function ProfileScreen() {
                 </div>
                 <p className="font-poppins text-xl font-extrabold text-slate-900 dark:text-slate-100">{s.value}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Favourite Destinations */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <h3 className="font-poppins text-base font-bold text-slate-900 dark:text-slate-100 mb-3">Favourite Destinations</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {favDestinations.map((d, i) => (
-              <div key={i} className="relative rounded-2xl overflow-hidden h-28 group cursor-pointer shadow-soft">
-                <img src={d.img} alt={d.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent group-hover:bg-slate-950/60 transition-colors" />
-                <span className="absolute bottom-3 left-3 text-white text-xs font-bold">{d.name}</span>
               </div>
             ))}
           </div>
