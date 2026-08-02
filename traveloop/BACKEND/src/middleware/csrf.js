@@ -11,7 +11,7 @@ const {
   cookieName: 'traveloop-csrf-token',
   cookieOptions: {
     httpOnly: false,
-    sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
     secure: env.NODE_ENV === 'production',
     path: '/',
   },

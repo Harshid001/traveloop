@@ -17,15 +17,22 @@ export async function apiRequest(path, options = {}) {
     addCsrfHeader(headers);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      credentials: 'include',
+      headers,
+    });
+  } catch (netErr) {
+    throw new Error(`Unable to connect to Traveloop API at ${API_BASE_URL}. Please check your network connection and server status.`);
+  }
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const errorMsg = payload.message || (typeof payload.error === 'string' ? payload.error : payload.error?.message) || 'Traveloop API request failed.';
+    const errorMsg = payload.message
+      || (typeof payload.error === 'string' ? payload.error : payload.error?.message)
+      || `Traveloop API request failed (${response.status} ${response.statusText || 'Error'}).`;
     throw new Error(errorMsg);
   }
   return payload.data ?? payload;

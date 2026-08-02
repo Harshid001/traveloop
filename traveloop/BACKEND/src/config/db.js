@@ -14,7 +14,7 @@ const connectDB = async (retryCount = 0) => {
       minPoolSize: 1,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
+      connectTimeoutMS: 5000,
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
 
@@ -33,8 +33,10 @@ const connectDB = async (retryCount = 0) => {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       return connectDB(retryCount + 1);
     }
-    console.error('MongoDB connection failed after all retries. Exiting.');
-    process.exit(1);
+    console.error('MongoDB connection failed after all retries.');
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
   }
 };
 

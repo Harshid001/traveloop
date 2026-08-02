@@ -9,7 +9,9 @@ try {
   validateEnv();
 } catch (err) {
   console.error(err.message);
-  process.exit(1);
+  if (!process.env.VERCEL) {
+    process.exit(1);
+  }
 }
 const Sentry = require('@sentry/node');
 const { initSentry } = require('./config/sentry');
@@ -90,7 +92,7 @@ app.use(helmet({
   },
 }));
 
-if (env.NODE_ENV === 'production') {
+if (env.NODE_ENV === 'production' && !process.env.VERCEL) {
   app.use((req, res, next) => {
     if (req.headers['x-forwarded-proto'] !== 'https') {
       return res.redirect(301, `https://${req.headers.host}${req.url}`);
@@ -99,13 +101,24 @@ if (env.NODE_ENV === 'production') {
   });
 }
 
+const clientUrls = (env.CLIENT_URL ? env.CLIENT_URL.split(',').map(s => s.trim()) : []);
 const allowedOrigins = [
-  env.CLIENT_URL || 'http://localhost:5173',
+  'http://localhost:5173',
+  'http://localhost:3000',
   env.MOBILE_URL || 'http://localhost:19000',
+  ...clientUrls,
 ].filter(Boolean);
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
   credentials: true,
   exposedHeaders: ['x-csrf-token'],
 }));
@@ -125,6 +138,10 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Traveloop API Documentation',
 }));
+
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Traveloop API Backend is running', version: '1.0.0' });
+});
 
 app.use('/api', apiLimiter);
 

@@ -1,4 +1,5 @@
 const swaggerJsdoc = require('swagger-jsdoc');
+const path = require('path');
 const { env } = require('./env');
 
 const options = {
@@ -16,7 +17,7 @@ const options = {
     servers: [
       {
         url: env.NODE_ENV === 'production'
-          ? (process.env.DOCS_URL || 'https://api.traveloop.com')
+          ? (process.env.DOCS_URL || 'https://traveloop-backend.vercel.app')
           : `http://localhost:${env.PORT || 5000}`,
         description: env.NODE_ENV === 'production' ? 'Production' : 'Development',
       },
@@ -120,9 +121,17 @@ const options = {
       { name: 'Health', description: 'Health check' },
     ],
   },
-  apis: ['./src/routes/*.js', './src/docs/*.js'],
+  apis: [
+    path.join(__dirname, '../routes/*.js'),
+    path.join(__dirname, '../docs/*.js'),
+  ],
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+let swaggerSpec = {};
+try {
+  swaggerSpec = swaggerJsdoc(options);
+} catch (err) {
+  console.warn('Swagger spec initialization warning:', err.message);
+}
 
 module.exports = swaggerSpec;
