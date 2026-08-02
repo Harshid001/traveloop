@@ -6,7 +6,6 @@
 
 const { cache, CACHE_TTL } = require('./cacheService');
 const amadeusService = require('./amadeusService');
-const unsplashService = require('./unsplashService');
 const { enrichWithImages } = require('./discoverService');
 
 /**

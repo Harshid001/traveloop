@@ -11,7 +11,7 @@ const OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1';
 /**
  * Search for places matching a text query using Nominatim
  */
-const searchPlaces = async (query, location, radius = 5000, type) => {
+const searchPlaces = async (query, location, _radius = 5000, _type) => {
   try {
     const response = await axios.get(`${NOMINATIM_BASE_URL}/search`, {
       params: {
@@ -61,14 +61,14 @@ const getPlaceDetails = async (placeId) => {
   }
 };
 
-const getPlacePhotos = (photoReference, maxWidth = 800) => {
+const getPlacePhotos = (photoReference, _maxWidth = 800) => {
   return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
 };
 
 /**
  * Autocomplete suggestions via Nominatim
  */
-const autocomplete = async (input, types, location) => {
+const autocomplete = async (input, _types, _location) => {
   try {
     const response = await axios.get(`${NOMINATIM_BASE_URL}/search`, {
       params: { format: 'json', q: input, limit: 5 },
@@ -201,7 +201,7 @@ const getNearbyPlaces = async (lat, lng, radius = 5000, type) => {
   return searchPlaces(type || 'tourism', `${lat},${lng}`, radius);
 };
 
-const getDistanceMatrix = async (origins, destinations, mode = 'driving') => {
+const getDistanceMatrix = async (origins, destinations, _mode = 'driving') => {
   return {
     originAddresses: Array.isArray(origins) ? origins : [origins],
     destinationAddresses: Array.isArray(destinations) ? destinations : [destinations],

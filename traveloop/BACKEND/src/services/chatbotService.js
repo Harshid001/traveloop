@@ -79,7 +79,7 @@ const getChatbotResponse = async (message, history = []) => {
   } catch (err) {
     const detail = err.response?.data?.error?.message || err.response?.data?.message || err.message;
     console.error('[chatbotService] xKiro API error:', detail);
-    throw new Error(`AI assistant error: ${detail}`);
+    throw new Error(`AI assistant error: ${detail}`, { cause: err });
   }
 };
 
