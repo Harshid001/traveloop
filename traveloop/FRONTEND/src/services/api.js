@@ -25,7 +25,8 @@ export async function apiRequest(path, options = {}) {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(payload.message || payload.error || 'Traveloop API request failed.');
+    const errorMsg = payload.message || (typeof payload.error === 'string' ? payload.error : payload.error?.message) || 'Traveloop API request failed.';
+    throw new Error(errorMsg);
   }
   return payload.data ?? payload;
 }

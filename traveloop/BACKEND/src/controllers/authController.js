@@ -292,20 +292,16 @@ const googleLogin = asyncHandler(async (req, res) => {
   } catch (_jwtErr) {
     // Fallback: access_token — fetch user info from Google
     try {
-      const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
-      const userInfoRes = await fetch(
-        `https://www.googleapis.com/oauth2/v3/userinfo`,
-        { headers: { Authorization: `Bearer ${idToken}` } }
-      );
-      if (!userInfoRes.ok) {
-        return errorResponse(res, 401, 'Invalid Google token');
-      }
-      const info = await userInfoRes.json();
+      const axios = require('axios');
+      const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const info = userInfoRes.data;
       email = info.email;
       name = info.name || info.email;
       googleId = info.sub;
     } catch (fetchErr) {
-      console.error('Google userinfo fetch failed:', fetchErr);
+      console.error('Google userinfo fetch failed:', fetchErr?.response?.data || fetchErr.message);
       return errorResponse(res, 401, 'Could not verify Google token');
     }
   }
