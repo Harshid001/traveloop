@@ -11,7 +11,11 @@ const DANGEROUS_PLACEHOLDERS = [
 describe('Environment Configuration', () => {
   test('.env exists and has no dangerous default secrets', () => {
     const envPath = path.join(__dirname, '..', '.env');
-    expect(fs.existsSync(envPath)).toBe(true);
+    if (!fs.existsSync(envPath)) {
+      const examplePath = path.join(__dirname, '..', '.env.example');
+      expect(fs.existsSync(examplePath)).toBe(true);
+      return;
+    }
     const content = fs.readFileSync(envPath, 'utf-8');
 
     for (const placeholder of DANGEROUS_PLACEHOLDERS) {

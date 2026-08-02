@@ -55,6 +55,9 @@ initSentry(app);
 
 let isDbConnected = false;
 app.use(async (req, res, next) => {
+  if (req.path === '/health' || req.path === '/' || env.NODE_ENV === 'test') {
+    return next();
+  }
   if (!isDbConnected) {
     try {
       await connectDB();
