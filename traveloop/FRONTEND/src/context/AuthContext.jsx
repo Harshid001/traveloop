@@ -33,9 +33,13 @@ export function AuthProvider({ children }) {
       })
       .catch((error) => {
         if (!mounted) return;
-        setAuthNotice(error.message?.includes('401')
-          ? 'Session expired. Please log in again.'
-          : 'Unable to reach the server. Please check your connection and try again.');
+        const msg = error?.message || '';
+        const isAuthError = msg.includes('Not authorized') || msg.includes('token') || msg.includes('expired') || msg.includes('401');
+        if (isAuthError) {
+          setUser(null);
+        } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Network Error')) {
+          setAuthNotice('Unable to reach the server. Please check your connection and try again.');
+        }
       })
       .finally(() => mounted && setInitializing(false));
 
