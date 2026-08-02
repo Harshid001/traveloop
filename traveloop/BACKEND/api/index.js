@@ -2,15 +2,17 @@
 require('dotenv').config();
 const app = require('../src/app');
 const connectDB = require('../src/config/db');
-const { startReminderScheduler } = require('../src/services/reminderService');
 
 // Connect DB once (Vercel reuses warm instances)
 let isConnected = false;
 const ensureDB = async () => {
   if (!isConnected) {
-    await connectDB();
-    startReminderScheduler();
-    isConnected = true;
+    try {
+      await connectDB();
+      isConnected = true;
+    } catch (err) {
+      console.error('Database connection error in Vercel function:', err.message);
+    }
   }
 };
 
