@@ -1,16 +1,58 @@
-# React + Vite
+# 💻 Traveloop Web Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The React + Vite single-page application for **Traveloop**. Provides an interactive dashboard, trip creation wizard, day-by-day itinerary builder, budget tracker, packing list manager, travel journal, destination explorer, and AI travel chatbot.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠️ Tech Stack
 
-## React Compiler
+- **Framework**: React 18
+- **Build Tool**: Vite 5
+- **Routing**: React Router v6
+- **Styling**: Tailwind CSS, Framer Motion
+- **Icons**: Lucide Icons (`lucide-react`)
+- **Maps**: Mapbox GL JS (`maplibre-gl`)
+- **Authentication**: `@react-oauth/google`, Custom CSRF & Cookie fetcher
+- **Testing**: Vitest, React Testing Library, Playwright (E2E)
+- **Deployment**: Vercel
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 📦 Setup & Installation
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Navigate to `FRONTEND`:
+   ```bash
+   cd FRONTEND
+   npm install
+   ```
+
+2. Configure environment variables:
+   Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Environment Variables:
+   ```env
+   VITE_API_URL=/api
+   VITE_CHATBOT_API_URL=/api/chatbot/message
+   VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+   ```
+
+4. Start development server:
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173`.
+
+---
+
+## 🧪 Testing & Build
+
+```bash
+# Run unit & component tests
+npm test
+
+# Production build
+npm run build
+```

@@ -1,77 +1,80 @@
-# Traveloop Backend
+# ⚙️ Traveloop Backend API
 
-This is the Express/Node.js backend for the Traveloop application. It provides a RESTful API for user authentication, trip planning, itineraries, budgets, packing lists, journals, and an AI-powered travel assistant.
+The Express / Node.js serverless REST API for **Traveloop**. Handles authentication, trip management, itineraries, budgets, packing lists, travel journals, destination discovery, and AI travel assistant responses.
 
-## Features
-- **Authentication**: Signup, Login, Profile Management with JWT.
-- **Trips & Itineraries**: Manage travel plans, days, and activities.
-- **Budgets & Packing**: Track expenses and packing lists.
-- **Journals & Saved Places**: Keep travel memories and bucket lists.
-- **AI Chatbot**: Travel assistant using Gemini/OpenAI with fallback.
-- **Security**: CORS, Helmet, Rate Limiting, Input Validation.
+---
 
-## Prerequisites
-- Node.js (v18+ recommended)
-- MongoDB (Local or Atlas)
+## 🛠️ Tech Stack
 
-## Installation
-1. Clone the repository and navigate to `BACKEND`:
+- **Runtime**: Node.js (v18+)
+- **Framework**: Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Security**: JWT Authentication, Cookie Parser, `csrf-csrf` Double CSRF protection, Helmet Security Headers, CORS, `express-rate-limit`
+- **AI Integrations**: Google Gemini API (`@google/generative-ai`), OpenAI API (`openai`) with automatic fallback
+- **Logging & Monitoring**: Winston logger, Sentry error tracking
+- **Documentation**: Swagger UI (`swagger-ui-express`, `swagger-jsdoc`)
+- **Deployment**: Vercel Serverless Functions
+
+---
+
+## 📦 Setup & Installation
+
+1. Navigate to the `BACKEND` directory:
    ```bash
    cd BACKEND
    npm install
    ```
 
-2. Set up your Environment Variables:
-   Rename `.env.example` to `.env` and configure your keys.
-   ```env
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/traveloop
-   JWT_SECRET=your_jwt_secret
-   JWT_EXPIRES_IN=7d
-   CLIENT_URL=http://localhost:5173
-   GEMINI_API_KEY=your_gemini_api_key
-   AI_PROVIDER=gemini
+2. Configure environment variables:
+   Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
    ```
 
-## Running the Server
-**Development Mode**
+3. Environment Variables breakdown:
+   ```env
+   PORT=5000
+   NODE_ENV=development
+   MONGO_URI=mongodb://localhost:27017/traveloop
+   JWT_SECRET=traveloop_default_jwt_secret_key_min_32_chars_long
+   JWT_EXPIRES_IN=7d
+   CLIENT_URL=http://localhost:5173
+   MOBILE_URL=http://localhost:19000
+
+   # AI Assistant (Optional)
+   GEMINI_API_KEY=your_gemini_key
+   OPENAI_API_KEY=your_openai_key
+   AI_PROVIDER=gemini
+
+   # Third-Party APIs (Optional)
+   GOOGLE_MAPS_API_KEY=your_google_maps_key
+   GOOGLE_CLIENT_ID=your_google_client_id
+   ```
+
+4. Run locally:
+   ```bash
+   # Development mode with nodemon
+   npm run dev
+
+   # Production mode
+   npm start
+   ```
+
+---
+
+## 🧪 Testing
+
+Run backend Jest test suites:
 ```bash
-npm run dev
-```
-**Production Mode**
-```bash
-npm start
+npm test
 ```
 
-## API Endpoints Overview
-- Base URL: `http://localhost:5000/api`
-- **Auth**: `/api/auth/signup`, `/api/auth/login`, `/api/auth/me`, `/api/auth/profile`
-- **Trips**: `/api/trips`, `/api/trips/upcoming`, `/api/trips/recent`
-- **Itineraries**: `/api/itineraries/:tripId`
-- **Budgets**: `/api/budgets/:tripId`
-- **Packing**: `/api/packing/:tripId`
-- **Journals**: `/api/journals`
-- **Saved Places**: `/api/saved`
-- **Explore**: `/api/explore`
-- **Dashboard**: `/api/dashboard/summary`
-- **Chatbot**: `/api/chatbot/message`
+---
 
-## Frontend Connection Guide
+## 📚 Interactive API Documentation
 
-In your Vite frontend, create a `.env` file at the root:
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_CHATBOT_API_URL=http://localhost:5000/api/chatbot/message
-```
+When running locally, Swagger UI documentation is available at:
+`http://localhost:5000/api-docs`
 
-**Common Frontend Connection Mistakes to Avoid:**
-1. **Missing Bearer token**: When making authenticated requests, ensure the header is structured properly: `Authorization: Bearer <token>`.
-2. **CORS issues**: Make sure your Vite app runs on the exact port specified in the backend's `CLIENT_URL` (usually `http://localhost:5173`).
-3. **Invalid JSON Body**: Ensure `Content-Type: application/json` is set in your fetch/axios requests.
-4. **Incorrect Chatbot Payload**: The chatbot endpoint strictly expects `{ message: "text", history: [] }`.
-
-## Testing with Postman
-You can test the endpoints locally using Postman.
-1. Send `POST /api/auth/signup` to create a user.
-2. Send `POST /api/auth/login` to obtain the token.
-3. In Postman, add `Authorization -> Bearer Token` and paste your token for subsequent requests to `/api/trips`, `/api/dashboard/summary`, etc.
+In production:
+`https://traveloop-backend.vercel.app/api-docs`
