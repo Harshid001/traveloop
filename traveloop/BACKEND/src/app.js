@@ -49,8 +49,22 @@ const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const { requestLogger } = require('./config/logger');
+const connectDB = require('./config/db');
 const app = express();
 initSentry(app);
+
+let isDbConnected = false;
+app.use(async (req, res, next) => {
+  if (!isDbConnected) {
+    try {
+      await connectDB();
+      isDbConnected = true;
+    } catch (err) {
+      console.error('Database connection warning:', err.message);
+    }
+  }
+  next();
+});
 
 app.set('trust proxy', env.NODE_ENV === 'production' ? 1 : 0);
 
