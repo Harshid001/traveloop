@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  Sparkles, DollarSign, Users, Calendar, MapPin, Heart, Compass, CheckCircle2,
-  X, ArrowRight, Hotel, Utensils, Navigation, Loader2, AlertCircle
+  Sparkles, Users, Calendar, MapPin, Compass, CheckCircle2,
+  X, ArrowRight, Navigation, Loader2, AlertCircle
 } from 'lucide-react';
 import { sendChatbotMessage } from '../../chatbot/chatbotApi';
 

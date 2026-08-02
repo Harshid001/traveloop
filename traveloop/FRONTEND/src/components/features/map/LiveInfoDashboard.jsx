@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  CloudSun, Wind, Droplets, AlertTriangle, ShieldCheck, Clock, Sun, Moon,
+  CloudSun, Wind, Droplets, AlertTriangle, ShieldCheck, Sun, Moon,
   DollarSign, Activity, Users, ChevronDown, ChevronUp, Radio
 } from 'lucide-react';
 

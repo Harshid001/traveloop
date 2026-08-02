@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import maplibregl, { MAPLIBRE_STYLES, DEFAULT_MAP_CENTER } from '../config/maplibre';
 import {
-  ArrowLeft, Trash2, Calendar, Check, Sparkles,
-  ChevronUp, ChevronDown, Search, Star, Hotel, Utensils, Car, Ticket,
-  Save, GripVertical, MapPin, Maximize2, Layers, Compass, Globe, Eye, Columns,
-  TrendingUp, Flame, Navigation, Plus, Info, X, Zap, DollarSign, ExternalLink, RefreshCw,
+  Trash2, Calendar, Check, Sparkles,
+  ChevronUp, ChevronDown, Search, Hotel, Utensils, Car, Ticket,
+  GripVertical, Layers, Compass, Globe, Eye, Columns,
+  Flame, Plus, X, Zap, DollarSign,
   Landmark, Trees, Mountain, ShoppingBag, UtensilsCrossed, Camera, Film, Moon, Users, Gem
 } from 'lucide-react';
 import { useGetDestinationsQuery, useCreateTripMutation } from '../services/apiSlice';
@@ -14,13 +14,14 @@ import Button from '../components/ui/Button';
 import AppLayout from '../components/layout/AppLayout';
 import { searchPlaces } from '../services/nominatimService';
 import { getOSRMRoute } from '../services/osrmService';
-import { GLOBAL_DESTINATIONS, MARKER_CATEGORIES } from '../data/destinationsData';
+import { GLOBAL_DESTINATIONS } from '../data/destinationsData';
 import { fetchLiveViewportDestinations, fetchNearbyAttractionsForLocation } from '../services/liveDestinationService';
 import { fetchWikipediaSummary } from '../services/wikipediaService';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
 
 // Currency Rates Definition
+// eslint-disable-next-line react-refresh/only-export-components
 export const CURRENCIES = {
   USD: { code: 'USD', symbol: '$', name: 'USD ($)', rate: 1.0 },
   EUR: { code: 'EUR', symbol: '€', name: 'EUR (€)', rate: 0.92 },
@@ -33,6 +34,7 @@ export const CURRENCIES = {
   AED: { code: 'AED', symbol: 'AED', name: 'AED (AED)', rate: 3.67 },
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatCurrency(amountInUSD, currencyCode = 'USD') {
   const curr = CURRENCIES[currencyCode] || CURRENCIES.USD;
   const converted = (amountInUSD || 0) * curr.rate;
@@ -116,7 +118,6 @@ function MapLibreTripPlannerMap({
   destinations,
   nearbyAttractions,
   selectedDests,
-  toggleDest,
   flyCenter,
   activeLayerKey,
   setActiveLayerKey,
@@ -219,6 +220,7 @@ function MapLibreTripPlannerMap({
       map.remove();
       mapRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Switch map style cleanly
@@ -458,7 +460,6 @@ export default function CreateTripScreen() {
   const [saved, setSaved] = useState(false);
   const [activeLayerKey, setActiveLayerKey] = useState('streets');
   const [previewOnlyMap, setPreviewOnlyMap] = useState(false);
-  const [customPlaces, setCustomPlaces] = useState([]);
   const [activeMapRegion, setActiveMapRegion] = useState('Worldwide');
   const [focusedDest, setFocusedDest] = useState(null);
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
@@ -491,7 +492,7 @@ export default function CreateTripScreen() {
     }
     const deduped = [];
     const nameSet = new Set();
-    [...combined, ...customPlaces].forEach((d) => {
+    combined.forEach((d) => {
       const key = (d.name || '').toLowerCase();
       if (!nameSet.has(key)) {
         nameSet.add(key);
@@ -499,7 +500,7 @@ export default function CreateTripScreen() {
       }
     });
     return deduped;
-  }, [liveViewportDestinations, initialDestinations, customPlaces]);
+  }, [liveViewportDestinations, initialDestinations]);
 
   // Viewport change handler
   const handleMapViewportChange = useCallback(async (bbox, zoom) => {
@@ -529,13 +530,10 @@ export default function CreateTripScreen() {
   }, [focusedDest, selectedDests]);
 
   useEffect(() => {
-    if (!targetLocation) {
-      setNearbyAttractions([]);
-      return;
-    }
+    if (!targetLocation) return;
 
-    setIsFetchingNearby(true);
     const timer = setTimeout(async () => {
+      setIsFetchingNearby(true);
       try {
         const attractions = await fetchNearbyAttractionsForLocation(
           targetLocation.lat,
@@ -557,14 +555,10 @@ export default function CreateTripScreen() {
 
   // Real-time Global Nominatim Search integration
   useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
-      setGlobalSearchDestinationsResults([]);
-      setIsSearchingDestinationsGlobal(false);
-      return;
-    }
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) return;
 
-    setIsSearchingDestinationsGlobal(true);
     const timer = setTimeout(async () => {
+      setIsSearchingDestinationsGlobal(true);
       try {
         const results = await searchPlaces(searchQuery, 8);
         const travelPhotos = [

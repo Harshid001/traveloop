@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   MapPin, Navigation, Trash2, ArrowUp, ArrowDown, Play, Sparkles, X,
   Clock, Compass, Fuel, DollarSign, Plane, Train, Bus, Car

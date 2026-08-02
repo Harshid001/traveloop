@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  Search, Mic, MicOff, SlidersHorizontal, X, History, TrendingUp, Sparkles, Star, MapPin, DollarSign, Calendar
+  Search, Mic, MicOff, SlidersHorizontal, X, History, TrendingUp, Sparkles, Star
 } from 'lucide-react';
-import { MARKER_CATEGORIES } from '../../../data/destinationsData';
 
 const TRENDING_TAGS = ['Santorini', 'Kyoto Temples', 'Swiss Alps', 'Dubai Desert', 'Bali Beaches', 'Banff Lakes'];
 

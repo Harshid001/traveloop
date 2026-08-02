@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import maplibregl, { MAPLIBRE_STYLES, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '../../../config/maplibre';
 import {
-  Layers, Compass, Navigation, Globe, Sparkles, Maximize2, RotateCcw, Box, Scale, Play, MapPin, Eye, Flame, Layers3, LocateFixed
+  Layers, Compass, Navigation, Sparkles, Maximize2, Flame
 } from 'lucide-react';
 import DestinationGlassPanel from './DestinationGlassPanel';
 import LiveInfoDashboard from './LiveInfoDashboard';
@@ -13,8 +13,6 @@ import CompareDestinationsModal from './CompareDestinationsModal';
 import { GLOBAL_DESTINATIONS, STANDALONE_POIS, MARKER_CATEGORIES } from '../../../data/destinationsData';
 import { getOSRMRoute } from '../../../services/osrmService';
 import { reverseGeocode } from '../../../services/nominatimService';
-
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
 
 export default function InteractiveDestinationMap({ initialCategory = 'All' }) {
   const mapContainerRef = useRef(null);
@@ -225,22 +223,20 @@ export default function InteractiveDestinationMap({ initialCategory = 'All' }) {
 
     mapRef.current = map;
 
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
-  }, []);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-  // Update map style safely when changed
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
+    // Update map style safely when changed
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map) return;
 
-    map.setStyle(activeLayer.style);
-    map.once('styledata', () => {
-      setupMapLayers(map);
-    });
-  }, [activeStyleKey, activeLayer.style]);
+      map.setStyle(activeLayer.style);
+      map.once('styledata', () => {
+        setupMapLayers(map);
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeStyleKey, activeLayer.style]);
 
   // Toggle 3D Pitch
   const toggle3dPitch = () => {
@@ -390,7 +386,6 @@ export default function InteractiveDestinationMap({ initialCategory = 'All' }) {
           geometry: { type: 'LineString', coordinates: [] },
         });
       }
-      setRouteStats({ distanceKm: 0, durationMinutes: 0 });
       return;
     }
 
@@ -572,7 +567,7 @@ export default function InteractiveDestinationMap({ initialCategory = 'All' }) {
           setRouteStops={setRouteStops}
           onClose={() => setShowRouteDrawer(false)}
           onPlayFlyover={handlePlayFlyover}
-          routeStats={routeStats}
+          routeStats={routeStops.length < 2 ? { distanceKm: 0, durationMinutes: 0 } : routeStats}
           onOptimizeRoute={() => {
             const copy = [...routeStops];
             copy.sort((a, b) => a.lat - b.lat);

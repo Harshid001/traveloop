@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Compass, Heart, Layers, List, Map, MapPin, Search, SlidersHorizontal, Star, Sparkles
+  ArrowLeft, List, Map, Star, Sparkles
 } from 'lucide-react';
 import AppLayout from '../components/layout/AppLayout';
 import InteractiveDestinationMap from '../components/features/map/InteractiveDestinationMap';
@@ -12,20 +11,12 @@ const CATS = ['All', 'Beach', 'Mountain', 'Heritage', 'Adventure', 'Luxury', 'Ho
 
 export default function ExploreScreen() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [view, setView] = useState('map');
 
   const filtered = useMemo(() => {
-    const text = query.trim().toLowerCase();
-    return GLOBAL_DESTINATIONS.filter((d) => {
-      const matchSearch =
-        !text ||
-        `${d.name} ${d.country} ${d.description} ${d.category}`.toLowerCase().includes(text);
-      const matchCat = activeCategory === 'All' || d.category === activeCategory;
-      return matchSearch && matchCat;
-    });
-  }, [query, activeCategory]);
+    return GLOBAL_DESTINATIONS.filter((d) => activeCategory === 'All' || d.category === activeCategory);
+  }, [activeCategory]);
 
   return (
     <AppLayout>

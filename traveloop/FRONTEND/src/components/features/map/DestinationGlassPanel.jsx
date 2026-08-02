@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Star, MapPin, Calendar, Thermometer, ShieldCheck, FileText, DollarSign,
-  Languages, Sparkles, Navigation, Bookmark, Share2, Hotel, Plane, Clock, Check,
-  Scale, Play, Video, ChevronLeft, ChevronRight, UserCheck, MessageSquare, Compass
+  Languages, Navigation, Bookmark, Share2, Clock, Check,
+  Scale, Video, ChevronLeft, ChevronRight, UserCheck, Compass
 } from 'lucide-react';
 
 export default function DestinationGlassPanel({

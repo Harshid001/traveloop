@@ -1,12 +1,9 @@
 // Live Destination Data Aggregator Service
 // Combines OpenTripMap + Wikipedia REST API + Nominatim Geocoding + Weather & Budget Indices
 
-import { fetchPlacesInBbox, fetchPlacesByRadius, fetchPlaceDetailsByXid, searchPlacesByAutosuggest } from './openTripMapService';
-import { fetchWikipediaSummary, searchWikipediaByCoords } from './wikipediaService';
-import { reverseGeocode, searchPlaces } from './nominatimService';
+import { fetchPlacesInBbox, fetchPlacesByRadius, fetchPlaceDetailsByXid } from './openTripMapService';
+import { fetchWikipediaSummary } from './wikipediaService';
 import { GLOBAL_DESTINATIONS } from '../data/destinationsData';
-
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80';
 
 // High-definition travel photos catalog for fallback augmentation
 const TRAVEL_PHOTOS_CATALOG = [

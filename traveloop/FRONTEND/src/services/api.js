@@ -25,7 +25,7 @@ export async function apiRequest(path, options = {}) {
       headers,
     });
   } catch (netErr) {
-    throw new Error(`Unable to connect to Traveloop API at ${API_BASE_URL}. Please check your network connection and server status.`);
+    throw new Error(`Unable to connect to Traveloop API at ${API_BASE_URL}. Please check your network connection and server status.`, { cause: netErr });
   }
 
   const payload = await response.json().catch(() => ({}));

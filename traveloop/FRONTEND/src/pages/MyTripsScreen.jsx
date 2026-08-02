@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Calendar, DollarSign, Plane, Clock, ChevronRight, Route as RouteIcon, Copy, Edit3, Share2, Trash2, FolderOpen } from 'lucide-react';
@@ -29,14 +29,14 @@ export default function MyTripsScreen() {
     () => (Array.isArray(rawApiTrips) ? rawApiTrips : (Array.isArray(rawApiTrips?.data) ? rawApiTrips.data : [])),
     [rawApiTrips]
   );
-  const [tripsState, setTripsState] = useState([]);
+  const [overrideTrips, setOverrideTrips] = useState(null);
   const [shareTrip, setShareTrip] = useState(null);
 
-  useEffect(() => { if (apiTrips?.length) setTripsState(apiTrips); }, [apiTrips]);
-
+  const tripsState = overrideTrips ?? apiTrips;
   const trips = tab === 'all' ? tripsState : tripsState.filter((t) => t.status === tab);
-  const duplicateTrip = (trip) => setTripsState((current) => [{ ...trip, id: Date.now(), title: `${trip.title} Copy`, status: 'draft' }, ...current]);
-  const deleteTrip = (id) => setTripsState((current) => current.filter((trip) => trip.id !== id));
+
+  const duplicateTrip = (trip) => setOverrideTrips((current) => [{ ...trip, id: Date.now(), title: `${trip.title} Copy`, status: 'draft' }, ...(current ?? apiTrips)]);
+  const deleteTrip = (id) => setOverrideTrips((current) => (current ?? apiTrips).filter((t) => t._id !== id && t.id !== id));
 
   return (
     <AppLayout>

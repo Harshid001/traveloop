@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
-  X, Calendar, Users, Ticket, CreditCard, ShieldCheck, CheckCircle2,
-  Sparkles, DollarSign, Award, ArrowRight
+  X, Calendar, Users, Ticket, CreditCard, CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 export default function BookingModal({ destination, isOpen, onClose }) {
@@ -12,6 +12,8 @@ export default function BookingModal({ destination, isOpen, onClose }) {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const bookingRef = useMemo(() => (destination ? String(destination.id || destination._id || '984123').replace(/\D/g, '').slice(-6).padStart(6, '7') : '784123'), [destination]);
 
   if (!isOpen || !destination) return null;
 
@@ -199,7 +201,7 @@ export default function BookingModal({ destination, isOpen, onClose }) {
             </div>
 
             <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-left text-xs space-y-1.5">
-              <p className="text-slate-400">Booking Reference: <strong className="text-amber-400">TRV-{Math.floor(100000 + Math.random() * 900000)}</strong></p>
+              <p className="text-slate-400">Booking Reference: <strong className="text-amber-400">TRV-{bookingRef}</strong></p>
               <p className="text-slate-400">Departure: <strong className="text-white">{startDate}</strong></p>
               <p className="text-slate-400">Guests: <strong className="text-white">{guests} Adults</strong></p>
               <p className="text-slate-400">Total Paid: <strong className="text-emerald-400">${totalPrice} USD</strong></p>

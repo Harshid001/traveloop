@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, Scale, Star, Thermometer, ShieldCheck, DollarSign, Calendar, Clock, MapPin, Check } from 'lucide-react';
+import { X, Scale, Star, Thermometer, ShieldCheck, DollarSign, Calendar, Clock, Check } from 'lucide-react';
 
 export default function CompareDestinationsModal({ compareList, onRemoveFromCompare, onClose }) {
   if (!compareList || compareList.length === 0) return null;

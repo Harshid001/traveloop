@@ -28,7 +28,7 @@ export default function HomePage() {
   const { likedTrips, toggleLike } = useLikedTrips();
 
   const { data: rawTopTrips, isLoading: topLoading, error: topError, refetch: refetchTop } = useGetTopTripsQuery();
-  const { data: rawLatestTrips, isLoading: latestLoading, error: latestError, refetch: refetchLatest } = useGetLatestTripsQuery();
+  const { data: rawLatestTrips } = useGetLatestTripsQuery();
 
   const topTrips = Array.isArray(rawTopTrips) ? rawTopTrips : (Array.isArray(rawTopTrips?.data) ? rawTopTrips.data : []);
   const latestTrips = Array.isArray(rawLatestTrips) ? rawLatestTrips : (Array.isArray(rawLatestTrips?.data) ? rawLatestTrips.data : []);
