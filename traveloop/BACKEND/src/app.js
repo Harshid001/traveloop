@@ -91,6 +91,7 @@ if (env.CSP_REPORT_URI) {
 }
 
 app.use(helmet({
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   contentSecurityPolicy: { directives: cspDirectives },
   permissionsPolicy: {
     features: {
