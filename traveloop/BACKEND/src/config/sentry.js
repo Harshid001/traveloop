@@ -4,7 +4,9 @@ const { env } = require('./env');
 function initSentry(app) {
   const dsn = env.SENTRY_DSN;
   if (!dsn) {
-    console.warn('SENTRY_DSN not set — error tracking disabled');
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('SENTRY_DSN not set — error tracking disabled');
+    }
     return;
   }
 

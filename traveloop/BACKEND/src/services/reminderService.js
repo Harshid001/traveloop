@@ -88,7 +88,9 @@ const sendRemindersForOffset = async (offsetDays) => {
  */
 const runReminderPass = async () => {
   if (!isEmailConfigured()) {
-    console.warn('Reminder service: EMAIL_USER/EMAIL_PASS not set — skipping reminder pass');
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('Reminder service: EMAIL_USER/EMAIL_PASS not set — skipping reminder pass');
+    }
     return 0;
   }
 
@@ -97,11 +99,13 @@ const runReminderPass = async () => {
     try {
       total += await sendRemindersForOffset(offset);
     } catch (err) {
-      console.error(`Reminder service: pass for offset ${offset}d failed:`, err.message);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error(`Reminder service: pass for offset ${offset}d failed:`, err.message);
+      }
     }
   }
   lastRun = new Date();
-  if (total > 0) console.log(`Reminder service: sent ${total} reminder email(s)`);
+  if (total > 0 && process.env.NODE_ENV !== 'test') console.log(`Reminder service: sent ${total} reminder email(s)`);
   return total;
 };
 
