@@ -161,39 +161,49 @@ app.get('/', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Traveloop API Backend is running', version: '1.0.0' });
 });
 
-app.use('/api', apiLimiter);
-
-app.use('/api', csrfRoutes);
-
-app.use('/api', doubleCsrfProtection);
-
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
+app.get('/api/v1/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running', version: 'v1' });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/chatbot', chatbotRoutes);
-app.use('/api/destinations', destinationRoutes);
-app.use('/api/places', placesRoutes);
-app.use('/api/maps', mapsRoutes);
-app.use('/api/images', imagesRoutes);
-app.use('/api/discover', discoverRoutes);
-app.use('/api/recommendations', recommendationsRoutes);
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running', version: 'v1' });
+});
 
-app.use('/api/users', protect, userRoutes);
-app.use('/api/trips', protect, tripRoutes);
-app.use('/api/trips', protect, itineraryRoutes);
-app.use('/api/trips', protect, budgetRoutes);
-app.use('/api/trips', protect, packingRoutes);
-app.use('/api/journals', protect, journalRoutes);
-app.use('/api/saved', protect, savedRoutes);
-app.use('/api/wishlist', protect, wishlistRoutes);
-app.use('/api/bookings', protect, bookingRoutes);
-app.use('/api/profile', protect, profileRoutes);
-app.use('/api/dashboard', protect, dashboardRoutes);
-app.use('/api/export', protect, exportRoutes);
-app.use('/api/notifications', protect, notificationRoutes);
-app.use('/api/search', protect, searchRoutes);
+// Legacy unversioned API route rewrite middleware to support /api/ -> /api/v1/
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/') && !req.url.startsWith('/api/v1/')) {
+    req.url = req.url.replace('/api/', '/api/v1/');
+  }
+  next();
+});
+
+app.use('/api/v1', apiLimiter);
+app.use('/api/v1', csrfRoutes);
+app.use('/api/v1', doubleCsrfProtection);
+
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/chatbot', chatbotRoutes);
+app.use('/api/v1/destinations', destinationRoutes);
+app.use('/api/v1/places', placesRoutes);
+app.use('/api/v1/maps', mapsRoutes);
+app.use('/api/v1/images', imagesRoutes);
+app.use('/api/v1/discover', discoverRoutes);
+app.use('/api/v1/recommendations', recommendationsRoutes);
+
+app.use('/api/v1/users', protect, userRoutes);
+app.use('/api/v1/trips', protect, tripRoutes);
+app.use('/api/v1/trips', protect, itineraryRoutes);
+app.use('/api/v1/trips', protect, budgetRoutes);
+app.use('/api/v1/trips', protect, packingRoutes);
+app.use('/api/v1/journals', protect, journalRoutes);
+app.use('/api/v1/saved', protect, savedRoutes);
+app.use('/api/v1/wishlist', protect, wishlistRoutes);
+app.use('/api/v1/bookings', protect, bookingRoutes);
+app.use('/api/v1/profile', protect, profileRoutes);
+app.use('/api/v1/dashboard', protect, dashboardRoutes);
+app.use('/api/v1/export', protect, exportRoutes);
+app.use('/api/v1/notifications', protect, notificationRoutes);
+app.use('/api/v1/search', protect, searchRoutes);
 
 app.use(csrfErrorHandler);
 if (Sentry.Handlers) {
