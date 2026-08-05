@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
+const xss = require('xss-clean');
 const { env, validateEnv } = require('./config/env');
 
 try {
@@ -143,6 +144,8 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(xss());
 
 app.use(requestLogger);
 

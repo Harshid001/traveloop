@@ -1,10 +1,13 @@
 const rateLimit = require('express-rate-limit');
 
+const inTest = process.env.NODE_ENV === 'test';
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 100,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: () => inTest,
   handler: (req, res) => {
     res.status(429).json({
       success: false,
@@ -18,6 +21,7 @@ const authLimiter = rateLimit({
   limit: 10,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: () => inTest,
   handler: (req, res) => {
     res.status(429).json({
       success: false,
@@ -31,6 +35,7 @@ const protectedLimiter = rateLimit({
   limit: 30,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: () => inTest,
   handler: (req, res) => {
     res.status(429).json({
       success: false,
@@ -44,6 +49,7 @@ const shareLimiter = rateLimit({
   limit: 30,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  skip: () => inTest,
   handler: (req, res) => {
     res.status(429).json({
       success: false,

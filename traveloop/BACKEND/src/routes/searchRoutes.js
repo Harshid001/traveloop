@@ -1,8 +1,10 @@
 const express = require('express');
+const { query } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { env } = require('../config/env');
 const User = require('../models/User');
 const { globalSearch } = require('../controllers/searchController');
+const validateRequest = require('../middleware/validateRequest');
 
 const router = express.Router();
 
@@ -20,6 +22,13 @@ const optionalProtect = async (req, res, next) => {
   next();
 };
 
-router.get('/', optionalProtect, globalSearch);
+router.get('/',
+  optionalProtect,
+  [
+    query('q', 'Search query is required').not().isEmpty().isString().isLength({ max: 500 }),
+    validateRequest,
+  ],
+  globalSearch
+);
 
 module.exports = router;

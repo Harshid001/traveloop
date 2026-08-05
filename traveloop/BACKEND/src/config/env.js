@@ -46,6 +46,8 @@ const JWT_PLACEHOLDERS = [
   'dev_secret_change_in_production',
 ];
 
+const JWT_PROHIBITED_SUBSTRINGS = ['dev', 'default', 'placeholder', 'test'];
+
 const MIN_JWT_SECRET_LENGTH = 32;
 
 function validateEnv() {
@@ -57,6 +59,12 @@ function validateEnv() {
     errors.push('JWT_SECRET is using a placeholder value — generate a strong random secret for production');
   } else if (env.JWT_SECRET.length < MIN_JWT_SECRET_LENGTH) {
     errors.push(`JWT_SECRET must be at least ${MIN_JWT_SECRET_LENGTH} characters long (current: ${env.JWT_SECRET.length})`);
+  } else if (env.NODE_ENV === 'production') {
+    const lower = env.JWT_SECRET.toLowerCase();
+    const hasProhibited = JWT_PROHIBITED_SUBSTRINGS.some(s => lower.includes(s));
+    if (hasProhibited) {
+      errors.push('JWT_SECRET contains prohibited substrings (dev/default/placeholder) — replace with a strong random secret for production');
+    }
   }
 
   if (!env.MONGO_URI) {

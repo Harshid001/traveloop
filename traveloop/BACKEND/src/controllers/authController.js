@@ -62,17 +62,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
   let user = await User.findOne({ email }).select('+password');
 
-  if (!user && (email === 'demo@traveloop.com' || email === 'testuser@example.com')) {
-    await User.create({
-      name: 'Demo Traveler',
-      email,
-      password: password || 'Password123!',
-      emailVerified: true,
-      profileComplete: true,
-    });
-    user = await User.findOne({ email }).select('+password');
-  }
-
   if (!user) {
     return errorResponse(res, 401, 'Invalid email or password');
   }

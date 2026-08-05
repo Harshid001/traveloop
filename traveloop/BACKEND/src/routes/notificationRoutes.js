@@ -15,6 +15,12 @@ router.patch('/:id/read', protect,
   markAsRead
 );
 router.delete('/clear', protect, clearNotifications);
-router.delete('/:id', protect, deleteNotification);
+router.delete('/:id', protect,
+  [
+    param('id', 'Invalid notification ID').isMongoId(),
+    validateRequest,
+  ],
+  deleteNotification
+);
 
 module.exports = router;
