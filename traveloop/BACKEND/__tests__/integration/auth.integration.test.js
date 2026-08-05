@@ -9,13 +9,20 @@ jest.setTimeout(300000);
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  process.env.MONGO_URI = mongoServer.getUri();
   process.env.NODE_ENV = 'test';
-  process.env.JWT_SECRET = 'test-jwt-secret-for-integration-tests-32chars+';
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-for-integration-tests-32chars+';
   process.env.CLIENT_URL = 'http://localhost:5173';
   process.env.EMAIL_USER = '';
   process.env.EMAIL_PASS = '';
+
+  if (!process.env.MONGO_URI || process.env.MONGO_URI.includes('localhost')) {
+    try {
+      mongoServer = await MongoMemoryServer.create();
+      process.env.MONGO_URI = mongoServer.getUri();
+    } catch (e) {
+      process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/traveloop_test';
+    }
+  }
 
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
@@ -24,7 +31,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
   if (mongoServer) {
     await mongoServer.stop();
   }
